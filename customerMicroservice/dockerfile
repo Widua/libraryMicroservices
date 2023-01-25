@@ -1,4 +1,4 @@
 FROM openjdk:17
 WORKDIR /app
-COPY target/borrowOperationMicroservice.jar .
-ENTRYPOINT ["java","-jar","borrowOperationMicroservice.jar"]
+COPY target/customerMicroservice.jar .
+ENTRYPOINT ["java","-jar","customerMicroservice.jar"]
