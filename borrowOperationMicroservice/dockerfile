@@ -1,0 +1,4 @@
+FROM openjdk:17
+WORKDIR /app
+COPY target/bookMicroservice.jar .
+ENTRYPOINT ["java","-jar","bookMicroservice.jar"]

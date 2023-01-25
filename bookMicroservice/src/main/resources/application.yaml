@@ -4,3 +4,10 @@ server:
 spring:
   application:
     name: bookMicroservices
+
+  jpa:
+    database: postgresql
+  datasource:
+    url: jdbc:postgresql://localhost:5432/library
+    username: user
+    password: passwd
