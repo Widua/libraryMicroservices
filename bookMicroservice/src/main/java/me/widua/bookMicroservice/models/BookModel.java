@@ -1,8 +1,9 @@
 package me.widua.bookMicroservice.models;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import me.widua.bookMicroservice.models.types.BookType;
@@ -13,16 +14,27 @@ import me.widua.bookMicroservice.models.types.BookType;
 public class BookModel {
 
     @Id
-    @NotNull
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    private String author ;
     private String bookTitle;
     private String ISBN ;
     private String bookDescription;
     private BookType bookType;
     private Integer inStorage;
 
-    public BookModel(Integer id, String bookTitle, String ISBN, String bookDescription, BookType bookType, Integer inStorage) {
+    public BookModel(Integer id, String author , String bookTitle, String ISBN, String bookDescription, BookType bookType, Integer inStorage) {
         this.id = id;
+        this.bookTitle = bookTitle;
+        this.ISBN = ISBN;
+        this.bookDescription = bookDescription;
+        this.bookType = bookType;
+        this.inStorage = inStorage;
+        this.author = author;
+    }
+
+    public BookModel(String author, String bookTitle, String ISBN, String bookDescription, BookType bookType, Integer inStorage) {
+        this.author = author;
         this.bookTitle = bookTitle;
         this.ISBN = ISBN;
         this.bookDescription = bookDescription;

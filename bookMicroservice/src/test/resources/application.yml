@@ -1,0 +1,17 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: bookMicroservices
+  datasource:
+    url: jdbc:h2:mem:libraryTest
+    username: sa
+    password: password
+    driverClassName: org.h2.Driver
+jpa:
+  spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
+  database: h2
+  generate-ddl: true
+
+

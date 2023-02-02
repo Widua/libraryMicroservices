@@ -7,7 +7,9 @@ spring:
 
   jpa:
     database: postgresql
+    generate-ddl: true
   datasource:
     url: jdbc:postgresql://localhost:5432/library
     username: user
     password: passwd
+
