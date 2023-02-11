@@ -1,10 +1,13 @@
 package me.widua.bookMicroservice.api;
 
 import me.widua.bookMicroservice.manager.BookManager;
-import me.widua.bookMicroservice.models.BookModel;
+import me.widua.bookMicroservice.models.ResponseModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/")
@@ -17,22 +20,14 @@ public class BookApi {
 
     @GetMapping("/books")
     public ResponseEntity<?> getBooks(){
-        return manager.getBooks();
-    }
-
-    @GetMapping("/books/{id}")
-    public ResponseEntity<?> getBookById(@PathVariable Integer id){
-        return manager.getBook(id);
-    }
-
-    @PostMapping("/book")
-    public ResponseEntity<?> addBook(@RequestBody BookModel book ){
-        return manager.addBook(book);
-    }
-
-    @PostMapping("/books")
-    public ResponseEntity<?> addBooks(@RequestBody Iterable<BookModel> books){
-        return manager.addBooks(books);
+        ResponseModel response = manager.getBooks() ;
+        if (response.getStatus().equals(HttpStatus.OK)){
+            return ResponseEntity.ok(response.getBody());
+        }
+        if (response.getStatus().equals(HttpStatus.NO_CONTENT)){
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 
 }
