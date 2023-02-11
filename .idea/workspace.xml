@@ -5,17 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6b2baa50-fda9-44cc-99ee-f43745a48232" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/bookMicroservice/src/main/java/me/widua/bookMicroservice/api/BookApi.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bookMicroservice/src/test/java/me/widua/bookMicroservice/manager/BookManagerTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bookMicroservice/src/test/resources/application.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bookMicroservice/src/test/java/me/widua/bookMicroservice/repository/BookRepositoryTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bookMicroservice/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bookMicroservice/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bookMicroservice/src/main/java/me/widua/bookMicroservice/manager/BookManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/bookMicroservice/src/main/java/me/widua/bookMicroservice/manager/BookManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bookMicroservice/src/main/java/me/widua/bookMicroservice/models/BookModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/bookMicroservice/src/main/java/me/widua/bookMicroservice/models/BookModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bookMicroservice/src/main/java/me/widua/bookMicroservice/repositories/BookRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/bookMicroservice/src/main/java/me/widua/bookMicroservice/repositories/BookRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bookMicroservice/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/bookMicroservice/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bookMicroservice/src/test/java/me/widua/bookMicroservice/manager/BookManagerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/bookMicroservice/src/test/java/me/widua/bookMicroservice/manager/BookManagerTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,15 +25,11 @@
       </list>
     </option>
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
-  </component>
-  <component name="MavenImportPreferences">
-    <option name="importingSettings">
-      <MavenImportingSettings>
-        <option name="workspaceImportEnabled" value="true" />
-      </MavenImportingSettings>
-    </option>
   </component>
   <component name="ProjectId" id="2KbAeebdTKCH79adaUrSBH4m6S6" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -61,7 +50,7 @@
     "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary": "JUnit5",
     "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit5": "",
     "jdk.selected.JAVA_MODULE": "17",
-    "last_opened_file_path": "/home/widua/IdeaProjects/libraryMicroservices/eurekaServer",
+    "last_opened_file_path": "/home/widua/IdeaProjects/libraryMicroservices",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -107,22 +96,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="JUnit.BookManagerTest.doesAddingInvalidISBNInMultipleBooksWorks">
-    <configuration name="BookManagerTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="bookMicroservice" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="me.widua.bookMicroservice.manager.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="me.widua.bookMicroservice.manager" />
-      <option name="MAIN_CLASS_NAME" value="me.widua.bookMicroservice.manager.BookManagerTest" />
-      <option name="TEST_OBJECT" value="class" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
+  <component name="RunManager" selected="JUnit.BookRepositoryTest.updateManyFields">
     <configuration name="BookManagerTest.doesAddingInvalidISBNInMultipleBooksWorks" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="bookMicroservice" />
       <extension name="coverage">
@@ -155,17 +129,49 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="BookManagerTest.doesSingleBookAdds" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="BookRepositoryTest.addingBook" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="bookMicroservice" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="me.widua.bookMicroservice.manager.*" />
+          <option name="PATTERN" value="me.widua.bookMicroservice.repository.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="me.widua.bookMicroservice.manager" />
-      <option name="MAIN_CLASS_NAME" value="me.widua.bookMicroservice.manager.BookManagerTest" />
-      <option name="METHOD_NAME" value="doesSingleBookAdds" />
+      <option name="PACKAGE_NAME" value="me.widua.bookMicroservice.repository" />
+      <option name="MAIN_CLASS_NAME" value="me.widua.bookMicroservice.repository.BookRepositoryTest" />
+      <option name="METHOD_NAME" value="addingBook" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="BookRepositoryTest.updateManyFields" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="bookMicroservice" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="me.widua.bookMicroservice.repository.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="me.widua.bookMicroservice.repository" />
+      <option name="MAIN_CLASS_NAME" value="me.widua.bookMicroservice.repository.BookRepositoryTest" />
+      <option name="METHOD_NAME" value="updateManyFields" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="BookRepositoryTest.updateOneFieldBook" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="bookMicroservice" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="me.widua.bookMicroservice.repository.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="me.widua.bookMicroservice.repository" />
+      <option name="MAIN_CLASS_NAME" value="me.widua.bookMicroservice.repository.BookRepositoryTest" />
+      <option name="METHOD_NAME" value="updateOneFieldBook" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -218,26 +224,13 @@
       </deployment>
       <method v="2" />
     </configuration>
-    <configuration name="docker-compose.yml.book_microservice: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
-      <deployment type="docker-compose.yml">
-        <settings>
-          <option name="services">
-            <list>
-              <option value="book_microservice" />
-            </list>
-          </option>
-          <option name="sourceFilePath" value="docker-compose.yml" />
-        </settings>
-      </deployment>
-      <method v="2" />
-    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.BookRepositoryTest.updateManyFields" />
+        <item itemvalue="JUnit.BookRepositoryTest.updateOneFieldBook" />
+        <item itemvalue="JUnit.BookRepositoryTest.addingBook" />
         <item itemvalue="JUnit.BookManagerTest.doesAddingInvalidISBNInMultipleBooksWorks" />
         <item itemvalue="JUnit.BookManagerTest.doesAddingInvalidISBNWorks" />
-        <item itemvalue="JUnit.BookManagerTest" />
-        <item itemvalue="JUnit.BookManagerTest.doesSingleBookAdds" />
-        <item itemvalue="Docker.docker-compose.yml.book_microservice: Compose Deployment" />
       </list>
     </recent_temporary>
   </component>
@@ -259,10 +252,22 @@
       <workItem from="1674922773748" duration="1927000" />
       <workItem from="1675187283175" duration="4293000" />
       <workItem from="1675332443200" duration="18479000" />
+      <workItem from="1676018657438" duration="9394000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

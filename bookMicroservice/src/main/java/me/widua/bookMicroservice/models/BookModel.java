@@ -1,12 +1,11 @@
 package me.widua.bookMicroservice.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import me.widua.bookMicroservice.models.types.BookType;
+
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -20,6 +19,7 @@ public class BookModel {
     private String bookTitle;
     private String ISBN ;
     private String bookDescription;
+    @Enumerated(EnumType.STRING)
     private BookType bookType;
     private Integer inStorage;
 
@@ -49,14 +49,25 @@ public class BookModel {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         BookModel bookModel = (BookModel) o;
-
-        return getId().equals(bookModel.getId());
+        return ISBN.equals(bookModel.ISBN);
     }
 
     @Override
     public int hashCode() {
-        return getId().hashCode();
+        return Objects.hash(getISBN());
+    }
+
+    @Override
+    public String toString() {
+        return "BookModel{" +
+                "id=" + id +
+                ", author='" + author + '\'' +
+                ", bookTitle='" + bookTitle + '\'' +
+                ", ISBN='" + ISBN + '\'' +
+                ", bookDescription='" + bookDescription + '\'' +
+                ", bookType=" + bookType +
+                ", inStorage=" + inStorage +
+                '}';
     }
 }

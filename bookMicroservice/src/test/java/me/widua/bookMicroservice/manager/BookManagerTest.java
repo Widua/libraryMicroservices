@@ -6,8 +6,10 @@ import me.widua.bookMicroservice.models.types.BookType;
 import me.widua.bookMicroservice.repositories.BookRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
@@ -31,30 +33,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BookManagerTest {
     @Autowired
     private BookManager underTest ;
-    @Autowired
+    @MockBean
     private BookRepository repository ;
 
+    private List<BookModel> booksDb ;
 
     @BeforeEach
     void setUp() {
-        // Initial Values
-        List<BookModel> books = Arrays.asList(
+       booksDb = Arrays.asList(
                 new BookModel("J.K. Rowling", "Harry Potter and the Philosopher's Stone" , "5006001200" , "First book of Harry Potter adventures" , BookType.PHYSICAL , 15),
                 new BookModel("J.K. Rowling", "Harry Potter and the Prisoner of Azkaban" , "2005006320" , "Another book of Harry Potter adventures" , BookType.PHYSICAL , 12),
                 new BookModel("William Shakespeare", "Makhbet" , "900232559" , "One of the most popular book from W. Shakespeare" , BookType.PHYSICAL , 3)
         );
-        // Put initial values to database
-        repository.saveAll(books);
-    }
-
-    @AfterEach
-     void tearDown() {
-        // Clear database
-        repository.deleteAll();
     }
 
     @Test
     public void doesSingleBookAdds(){
+
         final String ISBN = "900900900" ;
        // Given
        BookModel toInsertInDB = new BookModel("Bolesław Prus",
@@ -64,9 +59,9 @@ class BookManagerTest {
                BookType.PHYSICAL,
                4);
        // When
+
         underTest.addBook(toInsertInDB);
         Optional<BookModel> bookOptional = repository.getBookModelByISBN(ISBN);
-        Iterable<BookModel> books = repository.findAll();
        //Then
         assertTrue(bookOptional.isPresent());
 
