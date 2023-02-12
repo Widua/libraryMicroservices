@@ -2,9 +2,12 @@ package me.widua.bookMicroservice.manager;
 
 import me.widua.bookMicroservice.BookMicroserviceApplication;
 import me.widua.bookMicroservice.models.BookModel;
+import me.widua.bookMicroservice.models.ResponseModel;
 import me.widua.bookMicroservice.models.types.BookType;
 import me.widua.bookMicroservice.repositories.BookRepository;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,58 +42,50 @@ class BookManagerTest {
     private List<BookModel> booksDb ;
 
     @BeforeEach
-    void setUp() {
-       booksDb = Arrays.asList(
-                new BookModel("J.K. Rowling", "Harry Potter and the Philosopher's Stone" , "5006001200" , "First book of Harry Potter adventures" , BookType.PHYSICAL , 15),
-                new BookModel("J.K. Rowling", "Harry Potter and the Prisoner of Azkaban" , "2005006320" , "Another book of Harry Potter adventures" , BookType.PHYSICAL , 12),
-                new BookModel("William Shakespeare", "Makhbet" , "900232559" , "One of the most popular book from W. Shakespeare" , BookType.PHYSICAL , 3)
+    public void setUp(){
+        booksDb =  Arrays.asList(
+                new BookModel(
+                        "J.K. Rowling",
+                        "Harry Potter and the Philosopher's Stone" ,
+                        "5006001200" ,
+                        "First book of Harry Potter adventures" ,
+                        BookType.PHYSICAL ,
+                        15),
+                new BookModel(
+                        "J.K. Rowling",
+                        "Harry Potter and the Philosopher's Stone" ,
+                        "1001002003" ,
+                        "First book of Harry Potter adventures" ,
+                        BookType.E_BOOK ,
+                        15),
+                new BookModel(
+                        "Dante Alighieri",
+                        "Divine comedy" ,
+                        "9009008500" ,
+                        "Classic of literature" ,
+                        BookType.PHYSICAL ,
+                        15)
         );
-    }
 
-    @Test
-    public void doesSingleBookAdds(){
-
-        final String ISBN = "900900900" ;
-       // Given
-       BookModel toInsertInDB = new BookModel("Bolesław Prus",
-               "Lalka",
-               ISBN,
-               "Popular polish book",
-               BookType.PHYSICAL,
-               4);
-       // When
-
-        underTest.addBook(toInsertInDB);
-        Optional<BookModel> bookOptional = repository.getBookModelByISBN(ISBN);
-       //Then
-        assertTrue(bookOptional.isPresent());
 
     }
 
+
     @Test
-    public void doesAddingInvalidISBNWorks(){
+    public void getAllBooks(){
         //Given
-        BookModel wrongIsbnBook = new BookModel("William Shakespeare", "Makhbet" , "900232559" , "One of the most popular book from W. Shakespeare" , BookType.PHYSICAL , 3);
+        Mockito.when(repository.findAll()).thenReturn(booksDb);
         //When
-        ResponseEntity<?> response = underTest.addBook(wrongIsbnBook) ;
+        ResponseModel response = underTest.getBooks();
         //Then
-        assertEquals(response.getStatusCode() , HttpStatus.BAD_REQUEST);
+        assertEquals(response.getStatus(),HttpStatus.OK);
+        assertTrue(response.getBody() instanceof List);
+
+        List<BookModel> books = (List<BookModel>) response.getBody();
+        assertEquals(books.size() , 3);
+
+
     }
 
-    @Test
-    public void doesAddingInvalidISBNInMultipleBooksWorks(){
-        //Given
-        List<BookModel> newBooks = Arrays.asList(
-                new BookModel("J.K. Rowling", "Harry Potter and the Philosopher's Stone" , "9002001200" , "First book of Harry Potter adventures" , BookType.E_BOOK , 15),
-                new BookModel("J.K. Rowling", "Harry Potter and the Philosopher's Stone" , "1001001002" , "First book of Harry Potter adventures" , BookType.AUDIOBOOK , 15),
-                new BookModel("J.K. Rowling", "Harry Potter and the Philosopher's Stone" , "5006001200" , "First book of Harry Potter adventures" , BookType.PHYSICAL , 15)
-        ) ;
-        //When
-        ResponseEntity<?> response = underTest.addBooks(newBooks) ;
-        String wannabeBody = "Adding stopped, because of bad ISBN in 2 index";
-        String body = (String) response.getBody();
-        //Then
-        assertEquals(wannabeBody,body);
-    }
 
 }

@@ -82,11 +82,12 @@ public class BookManager {
     }
 
     public ResponseModel getBooksByAuthor(String author) {
-        List<BookModel> books = repository.getBookModelsByAuthor(author);
-        if (books.size() > 0){
-            return ResponseModel.builder().status(HttpStatus.OK).body(books).build();
+        Optional<List<BookModel>> books = repository.getBookModelsByAuthor(author);
+        if (books.isEmpty()){
+            return ResponseModel.builder().status(HttpStatus.NO_CONTENT).build();
+
         }
-        return ResponseModel.builder().status(HttpStatus.NO_CONTENT).build();
+        return ResponseModel.builder().status(HttpStatus.OK).body(books.get()).build();
     }
 
     public ResponseModel updateBook(BookModel newBook, String isbn, boolean nullAcceptance){
