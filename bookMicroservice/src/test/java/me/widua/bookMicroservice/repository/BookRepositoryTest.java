@@ -4,6 +4,7 @@ import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.types.BookType;
 import me.widua.bookMicroservice.repositories.BookRepository;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,52 +26,13 @@ public class BookRepositoryTest {
     @Autowired
     private BookRepository repository ;
 
-    @AfterEach
-    public void clearDb(){
-        repository.deleteAll();
-    }
-
-    @Test
-    public void addingBook(){
-        //given
-        BookModel book =  new BookModel(
-                "J.K. Rowling",
-                "Harry Potter and the Philosopher's Stone" ,
-                "5006001200" ,
-                "First book of Harry Potter adventures" ,
-                BookType.PHYSICAL ,
-                15);
-        //when
-        repository.save(book);
-        //then
-        assertEquals(repository.findById(1).get(),book);
-    }
-
-    @Test
-    public void queryingByIsbn(){
-        //given
-        BookModel book =  new BookModel(
-                "J.K. Rowling",
-                "Harry Potter and the Philosopher's Stone" ,
-                "5006001200" ,
-                "First book of Harry Potter adventures" ,
-                BookType.PHYSICAL ,
-                15);
-        repository.save(book);
-        //when
-        Optional<BookModel> queriedBook = repository.getBookModelByISBN(book.getISBN());
-        //then
-        assertTrue(queriedBook.isPresent());
-    }
-
-    @Test
-    public void queryingByAuthor(){
-        //Given
+    @BeforeEach
+    public void setDatabase(){
         List<BookModel> books = Arrays.asList(
                 new BookModel(
                         "J.K. Rowling",
                         "Harry Potter and the Philosopher's Stone" ,
-                        "5006001200" ,
+                        "70080045670" ,
                         "First book of Harry Potter adventures" ,
                         BookType.PHYSICAL ,
                         15),
@@ -89,11 +51,46 @@ public class BookRepositoryTest {
                         BookType.PHYSICAL ,
                         15)
         );
-        repository.saveAll(books) ;
+        repository.saveAll(books);
+    }
 
+    @AfterEach
+    public void clearDb(){
+        repository.deleteAll();
+    }
+
+    @Test
+    public void addingBook(){
+        //given
+        BookModel book =  new BookModel(
+                "J.K. Rowling",
+                "Harry Potter and the Philosopher's Stone" ,
+                "5006001200" ,
+                "First book of Harry Potter adventures" ,
+                BookType.AUDIOBOOK ,
+                15);
+        //when
+        repository.save(book);
+        //then
+        assertTrue(repository.getBookModelByISBN("5006001200").isPresent());
+    }
+
+    @Test
+    public void queryingByIsbn(){
+        //given
+        String isbn = "70080045670";
+        //when
+        Optional<BookModel> queriedBook = repository.getBookModelByISBN(isbn);
+        //then
+        assertTrue(queriedBook.isPresent());
+    }
+
+    @Test
+    public void queryingByAuthor(){
+        //Given
+        String author = "J.K. Rowling";
         //When
-        List<BookModel> queriedBooks = repository.getBookModelsByAuthor("J.K. Rowling").get();
-
+        List<BookModel> queriedBooks = repository.getBookModelsByAuthor(author).get();
         //Then
         assertEquals(2,queriedBooks.size());
     }
@@ -101,26 +98,10 @@ public class BookRepositoryTest {
     @Test
     public void queryingByTitle(){
         //Given
-        List<BookModel> books = Arrays.asList(
-                new BookModel(
-                        "J.K. Rowling",
-                        "Harry Potter and the Philosopher's Stone" ,
-                        "5006001200" ,
-                        "First book of Harry Potter adventures" ,
-                        BookType.PHYSICAL ,
-                        15),
-                new BookModel(
-                        "J.K. Rowling",
-                        "Harry Potter and the Philosopher's Stone" ,
-                        "1001002003" ,
-                        "First book of Harry Potter adventures" ,
-                        BookType.E_BOOK ,
-                        15)
-        );
-        repository.saveAll(books);
+        String title = "Harry Potter and the Philosopher's Stone";
         //When
-        Optional<List<BookModel>> queried = repository.getBookModelByBookTitle("Harry Potter and the Philosopher's Stone");
-
+        Optional<List<BookModel>> queried = repository.getBookModelByBookTitle(title);
+        //Then
         assertTrue(queried.isPresent());
         assertEquals(queried.get().size() , 2);
     }
@@ -128,75 +109,46 @@ public class BookRepositoryTest {
     @Test
     public void updateOneFieldBook(){
         //Given
-        BookModel book =  new BookModel(
-                "J.K. Rowling",
-                "Harry Potter and the Philosopher's Stone" ,
-                "5006001200" ,
-                "First book of Harry Potter adventures" ,
-                BookType.PHYSICAL ,
-                15);
+        BookModel queried = repository.getBookModelByISBN("9009008500").get();
+
         //When
-        repository.save(book);
-
-        BookModel queried = repository.getBookModelByISBN("5006001200").get();
-
         queried.setInStorage(17);
         repository.save(queried);
 
-        List<BookModel> books = (List<BookModel>) repository.findAll();
-        int size = books.size();
+        List<BookModel> danteBooks = repository.getBookModelsByAuthor("Dante Alighieri").get();
 
         // Then
         assertEquals(repository.findById(queried.getId()).get().getInStorage() , 17 );
         assertEquals(repository.findById(queried.getId()).get() , queried);
-        assertEquals(size,1);
+        assertEquals(danteBooks.size(),1);
     }
 
     @Test
     public void updateManyFields(){
         //Given
-        BookModel book =  new BookModel(
-                "J.K. Rowling",
-                "Harry Potter and the Philosopher's Stone" ,
-                "5006001200" ,
-                "First book of Harry Potter adventures" ,
-                BookType.PHYSICAL ,
-                15);
-        repository.save(book);
+        BookModel queried = repository.getBookModelByISBN("9009008500").get();
+        Integer id = queried.getId();
         //When
-        BookModel queried = repository.getBookModelByISBN(book.getISBN()).get();
-
         queried.setInStorage(17);
-        queried.setBookType(BookType.E_BOOK);
+        queried.setBookType(BookType.AUDIOBOOK);
         repository.save(queried);
 
-        List<BookModel> books = (List<BookModel>) repository.findAll();
-        int size = books.size();
-
+        List<BookModel> danteBooks = repository.getBookModelsByAuthor("Dante Alighieri").get();
+        BookModel updatedBook = repository.findById(id).get();
         // Then
-        assertEquals(repository.findById(queried.getId()).get(),book);
-        assertEquals(repository.findById(queried.getId()).get().getInStorage() , 17 );
-        assertEquals(size,1);
+        assertEquals(updatedBook.getInStorage() , 17 );
+        assertEquals(updatedBook.getBookType() , BookType.AUDIOBOOK);
+        assertEquals(danteBooks.size(),1);
     }
 
     @Test
     public void delete(){
         //Given
-        BookModel book =  new BookModel(
-                "J.K. Rowling",
-                "Harry Potter and the Philosopher's Stone" ,
-                "5006001200" ,
-                "First book of Harry Potter adventures" ,
-                BookType.PHYSICAL ,
-                15);
-        repository.save(book);
+        Integer id = repository.getBookModelByISBN("9009008500").get().getId();
         //When
-
-        BookModel queried = repository.getBookModelByISBN(book.getISBN()).get();
-
-        repository.deleteById(queried.getId());
+        repository.deleteById(id);
         //Then
-        assertTrue(repository.findById(queried.getId()).isEmpty());
+        assertTrue(repository.findById(id).isEmpty());
     }
 
 }
