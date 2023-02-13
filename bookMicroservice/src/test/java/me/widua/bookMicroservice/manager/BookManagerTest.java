@@ -77,12 +77,32 @@ class BookManagerTest {
         Mockito.when(repository.findAll()).thenReturn(booksDb);
         //When
         ResponseModel response = underTest.getBooks();
+        List<BookModel> books = (List<BookModel>) response.getBody();
         //Then
         assertEquals(response.getStatus(),HttpStatus.OK);
-        assertTrue(response.getBody() instanceof List);
-
-        List<BookModel> books = (List<BookModel>) response.getBody();
         assertEquals(books.size() , 3);
+    }
+
+    @Test
+    public void addBook(){
+
+    }
+
+    @Test
+    public void givenNullIsbnBookShouldReturnBadRequest(){
+        //Given
+        BookModel toInsert = new BookModel(
+                "NonValidBookAuthor",
+                "NonValidBookTitle" ,
+                null ,
+                "NonValidBookDescription" ,
+                BookType.PHYSICAL ,
+                1) ;
+        //When
+
+        ResponseModel response = underTest.addBook(toInsert);
+
+        //Then
 
 
     }
