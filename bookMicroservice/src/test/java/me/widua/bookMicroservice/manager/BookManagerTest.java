@@ -19,12 +19,15 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.MOCK,
@@ -38,10 +41,38 @@ class BookManagerTest {
     @Mock
     private BookRepository repository ;
 
+    List<BookModel> exampleBooks ;
+
 
     @BeforeEach
     public void setUp(){
         underTest = new BookManager(repository);
+        exampleBooks = Arrays.asList(
+                new BookModel(
+                        1,
+                        "J.K. Rowling",
+                        "Harry Potter and the Philosopher's Stone" ,
+                        "70080045670" ,
+                        "First book of Harry Potter adventures" ,
+                        BookType.PHYSICAL ,
+                        15),
+                new BookModel(
+                        2,
+                        "J.K. Rowling",
+                        "Harry Potter and the Philosopher's Stone" ,
+                        "1001002003" ,
+                        "First book of Harry Potter adventures" ,
+                        BookType.E_BOOK ,
+                        15),
+                new BookModel(
+                        3,
+                        "Dante Alighieri",
+                        "Divine comedy" ,
+                        "9009008500" ,
+                        "Classic of literature" ,
+                        BookType.PHYSICAL ,
+                        15)
+        );
     }
 
     @Test
@@ -50,6 +81,109 @@ class BookManagerTest {
         underTest.getBooks();
         //Ten
         verify(repository).findAll();
+    }
+    @Test
+    public void noBooksGivesNoContent(){
+        //When
+        when(repository.findAll()).thenReturn(new ArrayList<>());
+        ResponseModel response = underTest.getBooks();
+        //Then
+        assertEquals(response.getStatus(),HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    public void canGetBookById(){
+        //given
+        Integer id = 1;
+        //When
+        underTest.getBook(id);
+        //Then
+        verify(repository).findById(id);
+    }
+
+    @Test
+    public void noBookByIdGivesNoContent(){
+        //Given
+        Integer id = 1;
+        //When
+        when(repository.findById(id)).thenReturn(Optional.empty());
+        ResponseModel response = underTest.getBook(id);
+        //Then
+        assertEquals(HttpStatus.NO_CONTENT , response.getStatus());
+    }
+
+    @Test
+    public void canGetBookByIsbn(){
+        //Given
+        String isbn = "5006001200";
+        //When
+        underTest.getBookByISBN(isbn);
+        //Then
+        verify(repository).getBookModelByISBN(isbn);
+    }
+
+    @Test
+    public void noBookByIsbnNoContent(){
+        //Given
+        String isbn = "5006001200";
+        //When
+        when(repository.getBookModelByISBN(isbn)).thenReturn(Optional.empty());
+        ResponseModel response = underTest.getBookByISBN(isbn);
+        //Then
+        assertEquals(HttpStatus.NO_CONTENT , response.getStatus());
+    }
+
+    @Test
+    public void addBookWithValidIsbn(){
+        //Given
+        BookModel toSave = new BookModel(
+                "J.K. Rowling",
+                "Harry Potter and the Philosopher's Stone" ,
+                "90090012005" ,
+                "First book of Harry Potter adventures" ,
+                BookType.PHYSICAL ,
+                15);
+        //When
+        when(repository.getBookModelByISBN(toSave.getISBN())).thenReturn(Optional.empty());
+        ResponseModel response = underTest.addBook(toSave);
+        //Then
+        verify(repository).save(toSave);
+        assertEquals(HttpStatus.CREATED , response.getStatus());
+    }
+
+    @Test
+    public void addBookWithInvalidIsbn(){
+        //Given
+        String isbn = "90090012005";
+        BookModel toSave = new BookModel(
+                "J.K. Rowling",
+                "Harry Potter and the Philosopher's Stone" ,
+                 isbn,
+                "First book of Harry Potter adventures" ,
+                BookType.PHYSICAL ,
+                15);
+        //When
+        when(repository.getBookModelByISBN(isbn)).thenReturn(Optional.of(toSave));
+        ResponseModel responseModel = underTest.addBook(toSave);
+        //Then
+        assertEquals(responseModel.getStatus() , HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    public void addBookWithNullIsbn(){
+        //Given
+        String isbn = null;
+        BookModel toSave = new BookModel(
+                "J.K. Rowling",
+                "Harry Potter and the Philosopher's Stone" ,
+                isbn,
+                "First book of Harry Potter adventures" ,
+                BookType.PHYSICAL ,
+                15);
+        //When
+        ResponseModel responseModel = underTest.addBook(toSave);
+        //Then
+        assertEquals(responseModel.getStatus() , HttpStatus.BAD_REQUEST);
     }
 
 

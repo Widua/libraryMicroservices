@@ -114,17 +114,12 @@ public class BookManager {
         return ResponseModel.builder().status(HttpStatus.OK).body("Successfully updated book!").build();
     }
 
-
-
     private boolean isISBNValid(String isbn){
-        Set<String> setOfIsbn = new HashSet<>();
-        repository.findAll().forEach(book -> {setOfIsbn.add(book.getISBN());});
-
-        if (setOfIsbn.contains(isbn) && isbn == null){
+        if (isbn == null){
             return false;
         }
-
-        return true;
+        Optional<BookModel> bookModelOptional = repository.getBookModelByISBN(isbn);
+        return bookModelOptional.isEmpty();
     }
 
     private BookModel updateBookModel(BookModel oldBook, BookModel newBook, boolean nullAcceptance){
