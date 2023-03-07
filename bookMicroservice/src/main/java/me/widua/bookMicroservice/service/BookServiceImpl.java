@@ -1,4 +1,4 @@
-package me.widua.bookMicroservice.manager;
+package me.widua.bookMicroservice.service;
 
 import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
@@ -16,15 +16,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
-public class BookManager {
+public class BookServiceImpl implements BookService {
 
     private final BookRepository repository;
 
     @Autowired
-    public BookManager(BookRepository repository){
+    public BookServiceImpl(BookRepository repository){
         this.repository = repository ;
     }
 
+    @Override
     public ResponseModel getBooks(){
 
         List<BookModel> books = (List<BookModel>) repository.findAll();
@@ -36,6 +37,7 @@ public class BookManager {
         }
     }
 
+    @Override
     public ResponseModel getBook(Integer id){
         Optional<BookModel> book = repository.findById(id);
         if (book.isEmpty()){
@@ -44,7 +46,8 @@ public class BookManager {
         return ResponseModel.builder().status(HttpStatus.OK).body(book).build();
     }
 
-    public ResponseModel getBookByISBN(String isbn){
+    @Override
+    public ResponseModel getBook(String isbn){
         Optional<BookModel> queriedBookFromDb = repository.getBookModelByISBN(isbn);
         if (queriedBookFromDb.isEmpty()){
             return ResponseModel.builder().status(HttpStatus.NO_CONTENT).build();
@@ -52,6 +55,7 @@ public class BookManager {
         return ResponseModel.builder().status(HttpStatus.OK).body(queriedBookFromDb.get()).build();
     }
 
+    @Override
     public ResponseModel addBook(BookModel book){
         if (isISBNValid(book.getISBN())){
             repository.save(book);
@@ -60,6 +64,7 @@ public class BookManager {
         return ResponseModel.builder().status(HttpStatus.BAD_REQUEST).body(String.format("The ISBN number %s is used by other book!", book.getISBN())).build();
     }
 
+    @Override
     public ResponseModel addBooks(Iterable<BookModel> books){
         AtomicInteger size = new AtomicInteger(0);
         AtomicBoolean valid = new AtomicBoolean(true);
@@ -81,7 +86,8 @@ public class BookManager {
         return ResponseModel.builder().status(HttpStatus.BAD_REQUEST).body(String.format("Adding stopped, because of bad ISBN in %s index", size)).build();
     }
 
-    public ResponseModel getBooksByAuthor(String author) {
+    @Override
+    public ResponseModel getBooks(String author) {
         Optional<List<BookModel>> books = repository.getBookModelsByAuthor(author);
         if (books.isEmpty()){
             return ResponseModel.builder().status(HttpStatus.NO_CONTENT).build();
@@ -90,6 +96,7 @@ public class BookManager {
         return ResponseModel.builder().status(HttpStatus.OK).body(books.get()).build();
     }
 
+    @Override
     public ResponseModel updateBook(BookModel newBook, String isbn, boolean nullAcceptance){
 
         if (  !isISBNValid(newBook.getISBN())  &&  !newBook.getISBN().equals(isbn)  ){
@@ -108,13 +115,12 @@ public class BookManager {
         return ResponseModel.builder().status(HttpStatus.OK).body("Successfully updated book!").build();
     }
 
+    @Override
     public ResponseModel updateBook(BookModel newBook, Integer id, boolean nullAcceptance){
 
 
         return ResponseModel.builder().status(HttpStatus.OK).body("Successfully updated book!").build();
     }
-
-
 
     private boolean isISBNValid(String isbn){
         Set<String> setOfIsbn = new HashSet<>();
@@ -153,7 +159,6 @@ public class BookManager {
         if (newBook.getInStorage() != null || nullAcceptance){
             oldBook.setInStorage(newBook.getInStorage());
         }
-
         return oldBook;
     }
 }
