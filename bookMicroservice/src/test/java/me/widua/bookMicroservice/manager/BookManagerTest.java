@@ -9,9 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -26,6 +24,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,6 +41,7 @@ class BookManagerTest {
     private BookRepository repository ;
 
     List<BookModel> exampleBooks ;
+    BookModel exampleInvalidBook ;
 
 
     @BeforeEach
@@ -73,6 +73,17 @@ class BookManagerTest {
                         BookType.PHYSICAL ,
                         15)
         );
+
+        exampleInvalidBook = new BookModel(
+                1,
+                "J.K. Rowling",
+                "Harry Potter and the Philosopher's Stone" ,
+                null ,
+                "First book of Harry Potter adventures" ,
+                BookType.PHYSICAL ,
+                15
+                );
+
     }
 
     @Test
@@ -136,13 +147,7 @@ class BookManagerTest {
     @Test
     public void addBookWithValidIsbn(){
         //Given
-        BookModel toSave = new BookModel(
-                "J.K. Rowling",
-                "Harry Potter and the Philosopher's Stone" ,
-                "90090012005" ,
-                "First book of Harry Potter adventures" ,
-                BookType.PHYSICAL ,
-                15);
+        BookModel toSave = exampleBooks.get(0);
         //When
         when(repository.getBookModelByISBN(toSave.getISBN())).thenReturn(Optional.empty());
         ResponseModel response = underTest.addBook(toSave);
@@ -186,6 +191,42 @@ class BookManagerTest {
         assertEquals(responseModel.getStatus() , HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    public void addValidBooks(){
+        //Given
+        List<BookModel> toSave = exampleBooks;
+        //When
+        underTest.addBooks(toSave);
+        //Then
+        verify(repository).saveAll(toSave);
+    }
 
+    @Test
+    public void tryAddBooksWithDuplicatedIsbn(){
+        //Given
+        ArrayList<BookModel> toSave = new ArrayList<>(exampleBooks);
+        BookModel invalid = exampleInvalidBook;
+        invalid.setISBN("70080045670");
+        toSave.add(invalid);
+        //When
+        ResponseModel response = underTest.addBooks(toSave);
+        //Then
+        assertEquals(HttpStatus.BAD_REQUEST , response.getStatus());
+        assertEquals("You provided at least two books with same ISBN! ISBN for each book must be unique!" , response.getBody());
+    }
+
+    @Test
+    public void tryAddBooksWithISBNThatExistInDatabase(){
+        //Given
+        final String isbn = "1001002003";
+        List<BookModel> toSave = exampleBooks;
+        //When
+        when( repository.getBookModelByISBN( anyString() )).thenReturn( Optional.empty() );
+        when( repository.getBookModelByISBN( eq(isbn) )).thenReturn(Optional.of(exampleBooks.get(1)));
+        ResponseModel response = underTest.addBooks(toSave);
+        //Then
+        assertEquals(HttpStatus.BAD_REQUEST , response.getStatus() );
+        assertEquals("Adding stopped, because book in 1 index exist in database!",response.getBody());
+    }
 
 }

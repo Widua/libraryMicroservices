@@ -3,6 +3,7 @@ package me.widua.bookMicroservice.manager;
 import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
 import me.widua.bookMicroservice.repositories.BookRepository;
+import org.assertj.core.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Service
 public class BookManager {
@@ -60,25 +62,43 @@ public class BookManager {
         return ResponseModel.builder().status(HttpStatus.BAD_REQUEST).body(String.format("The ISBN number %s is used by other book!", book.getISBN())).build();
     }
 
-    public ResponseModel addBooks(Iterable<BookModel> books){
-        AtomicInteger size = new AtomicInteger(0);
-        AtomicBoolean valid = new AtomicBoolean(true);
+    public ResponseModel addBooks(List<BookModel> books){
+        Integer size = books.size();
+        AtomicInteger errorIndex = new AtomicInteger(0);
+        AtomicBoolean isValid = new AtomicBoolean(true);
+
+        Set<String> setOfIsbn = Streams
+                .stream(books)
+                .map(BookModel::getISBN)
+                .collect(Collectors.toSet());
+
+        if (setOfIsbn.size() != size){
+            return ResponseModel.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("You provided at least two books with same ISBN! ISBN for each book must be unique!").build();
+        }
+
         books.forEach(
                 book -> {
-                    if (isISBNValid(book.getISBN())){
-                        size.addAndGet(1);
-                    }else {
-                        valid.set(false);
+                    if (!isISBNValid(book.getISBN())){
+                        isValid.set(false);
+                        errorIndex.set(books.indexOf(book));
                         return;
                     }
                 }
         );
 
-        if (valid.get()){
+        if (isValid.get()){
             repository.saveAll(books);
-            return ResponseModel.builder().status(HttpStatus.CREATED).body(String.format("Total number of created books %s",size.get())).build();
+            return ResponseModel.builder().status(HttpStatus.CREATED).body(String.format("Total number of created books %s",size)).build();
         }
-        return ResponseModel.builder().status(HttpStatus.BAD_REQUEST).body(String.format("Adding stopped, because of bad ISBN in %s index", size)).build();
+        return ResponseModel
+                .builder()
+                .status(HttpStatus.BAD_REQUEST)
+                .body(
+                        String.format("Adding stopped, because book in %s index exist in database!"
+                                , errorIndex.get()))
+                .build();
     }
 
     public ResponseModel getBooksByAuthor(String author) {
