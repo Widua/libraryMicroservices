@@ -42,6 +42,7 @@ class BookManagerTest {
 
     List<BookModel> exampleBooks ;
     BookModel exampleInvalidBook ;
+    BookModel exampleSingleBook ;
 
 
     @BeforeEach
@@ -83,6 +84,15 @@ class BookManagerTest {
                 BookType.PHYSICAL ,
                 15
                 );
+        exampleSingleBook = new BookModel(
+                1,
+                "J. R. R. Tolkien",
+                "The Hobbit, Part One",
+                "9099099090",
+                "First part of one of the most popular Tolkien book series",
+                BookType.PHYSICAL,
+                20
+        );
 
     }
 
@@ -245,12 +255,36 @@ class BookManagerTest {
                 );
 
         ResponseModel response = underTest.getBooksByAuthor(author);
-        Optional<List<BookModel>> optionalResponse = Optional.of((List<BookModel>) response.getBody()) ;
+        Optional<List<BookModel>> optionalResponse = Optional.of( (List<BookModel>) response.getBody() )  ;
         //Then
         assertEquals(HttpStatus.OK,response.getStatus());
         assertEquals(2 , optionalResponse.get().size());
     }
 
+    @Test
+    public void tryUpdateNonExistingBookByIsbn(){
+        //Given
+        final String isbn = exampleSingleBook.getISBN();
+        exampleSingleBook.setInStorage(55);
+        //When
+        when( repository.getBookModelByISBN(isbn) ).thenReturn(Optional.empty());
+        ResponseModel response = underTest.updateBook(exampleSingleBook,isbn,true);
+        //Then
+        assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
+        assertEquals( String.format("Book with ISBN: %s does not exist!",isbn) , response.getBody() );
+    }
+
+    @Test
+    public void tryUpdateBookByIsbnWithInvalidIsbn(){
+        //Given
+        final String isbn = null;
+        exampleSingleBook.setInStorage(55);
+        //When
+        ResponseModel response = underTest.updateBook(exampleSingleBook,isbn,true);
+        //Then
+        assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
+        assertEquals( String.format("ISBN: %s is not valid!",isbn) , response.getBody() );
+    }
 
 
 }
