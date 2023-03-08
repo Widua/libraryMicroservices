@@ -229,4 +229,28 @@ class BookManagerTest {
         assertEquals("Adding stopped, because book in 1 index exist in database!",response.getBody());
     }
 
+    @Test
+    public void tryGetBooksByAuthor(){
+        //Given
+        final String author = "J.K. Rowling";
+        //When
+        when(repository.getBookModelsByAuthor(author))
+                .thenReturn(
+                        Optional.of(exampleBooks
+                                .stream()
+                                .filter(
+                                        book -> {
+                                            return book.getAuthor().equals(author);
+                                        }).toList())
+                );
+
+        ResponseModel response = underTest.getBooksByAuthor(author);
+        Optional<List<BookModel>> optionalResponse = Optional.of((List<BookModel>) response.getBody()) ;
+        //Then
+        assertEquals(HttpStatus.OK,response.getStatus());
+        assertEquals(2 , optionalResponse.get().size());
+    }
+
+
+
 }
