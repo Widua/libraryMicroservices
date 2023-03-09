@@ -5,7 +5,6 @@ import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
 import me.widua.bookMicroservice.models.types.BookType;
 import me.widua.bookMicroservice.repositories.BookRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,8 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,7 +51,7 @@ class BookManagerTest {
                         1,
                         "J.K. Rowling",
                         "Harry Potter and the Philosopher's Stone" ,
-                        "70080045670" ,
+                        "7008004567" ,
                         "First book of Harry Potter adventures" ,
                         BookType.PHYSICAL ,
                         15),
@@ -169,7 +167,7 @@ class BookManagerTest {
     @Test
     public void addBookWithInvalidIsbn(){
         //Given
-        String isbn = "90090012005";
+        String isbn = "9009001200";
         BookModel toSave = new BookModel(
                 "J.K. Rowling",
                 "Harry Potter and the Philosopher's Stone" ,
@@ -216,7 +214,7 @@ class BookManagerTest {
         //Given
         ArrayList<BookModel> toSave = new ArrayList<>(exampleBooks);
         BookModel invalid = exampleInvalidBook;
-        invalid.setISBN("70080045670");
+        invalid.setISBN("7008004567");
         toSave.add(invalid);
         //When
         ResponseModel response = underTest.addBooks(toSave);
@@ -268,7 +266,7 @@ class BookManagerTest {
         exampleSingleBook.setInStorage(55);
         //When
         when( repository.getBookModelByISBN(isbn) ).thenReturn(Optional.empty());
-        ResponseModel response = underTest.updateBook(exampleSingleBook,isbn,true);
+        ResponseModel response = underTest.updateBook(exampleSingleBook,isbn);
         //Then
         assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
         assertEquals( String.format("Book with ISBN: %s does not exist!",isbn) , response.getBody() );
@@ -280,11 +278,72 @@ class BookManagerTest {
         final String isbn = null;
         exampleSingleBook.setInStorage(55);
         //When
-        ResponseModel response = underTest.updateBook(exampleSingleBook,isbn,true);
+        ResponseModel response = underTest.updateBook(exampleSingleBook,isbn);
         //Then
         assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
         assertEquals( String.format("ISBN: %s is not valid!",isbn) , response.getBody() );
     }
 
+    @Test
+    public void tryUpdateBookByIsbn(){
+        //Given
+        final String isbn = exampleSingleBook.getISBN();
+        BookModel newBook = exampleSingleBook;
+        newBook.setInStorage(56);
+        newBook.setBookTitle("The Hobbit - Part One");
+        //When
+        when(repository.getBookModelByISBN(isbn)).thenReturn( Optional.of(exampleSingleBook) );
+        ResponseModel response = underTest.updateBook(newBook,isbn);
+        //Then
+        assertAll(
+                "Response properties test",
+                () -> assertEquals(HttpStatus.OK , response.getStatus()),
+                () -> assertEquals("Book successfully updated!", response.getBody())
+        );
+        verify(repository.save(newBook));
+    }
 
+    @Test
+    public void tryUpdateNonExistingBookById(){
+        //Given
+        final Integer id = exampleSingleBook.getId();
+        exampleSingleBook.setInStorage(55);
+        //When
+        when( repository.findById(id)).thenReturn(Optional.empty());
+        ResponseModel response = underTest.updateBook(exampleSingleBook,id);
+        //Then
+        assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
+        assertEquals( String.format("Book with id: %s does not exist!",id) , response.getBody() );
+    }
+
+    @Test
+    public void tryUpdateBookByIsbnWithInvalidId(){
+        //Given
+        final Integer id = null;
+        exampleSingleBook.setInStorage(55);
+        //When
+        ResponseModel response = underTest.updateBook(exampleSingleBook, id);
+        //Then
+        assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
+        assertEquals( String.format("ISBN: %s is not valid!", id) , response.getBody() );
+    }
+
+    @Test
+    public void tryUpdateBookById(){
+        //Given
+        final Integer id = exampleSingleBook.getId();
+        BookModel newBook = exampleSingleBook;
+        newBook.setInStorage(56);
+        newBook.setBookTitle("The Hobbit - Part One");
+        //When
+        when(repository.findById(id)).thenReturn( Optional.of(exampleSingleBook) );
+        ResponseModel response = underTest.updateBook(newBook, id);
+        //Then
+        assertAll(
+                "Response properties test",
+                () -> assertEquals(HttpStatus.OK , response.getStatus()),
+                () -> assertEquals("Book successfully updated!", response.getBody())
+        );
+        verify(repository.save(newBook));
+    }
 }

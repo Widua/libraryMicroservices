@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 @Service
@@ -110,12 +111,17 @@ public class BookManager {
         return ResponseModel.builder().status(HttpStatus.OK).body(books.get()).build();
     }
 
-    public boolean doesIsbnTakenInDb(String isbn){
-        // TODO
+    public boolean doesIsbnExistInDatabase(String isbn){
+        return repository.getBookModelByISBN(isbn).isPresent();
     }
 
+    /* Simplified ISBN validation, on production regex can be switched to:
+     *  (?:ISBN(?:-13)?:?\ )?(?=[0-9]{13}$|(?=(?:[0-9]+[-\ ]){4})[-\ 0-9]{17}$)97[89][-\ ]?[0-9]{1,5}[-\ ]?[0-9]+[-\ ]?[0-9]+[-\ ]?[0-9]
+     *   source: https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s13.html
+     */
     public boolean isISBNValid(String isbn){
-        //TODO
+        String isbnRegex = "(?=[0-9]*$)(?:.{10}|.{13})";
+        return isbn.matches(isbnRegex);
     }
 
     public ResponseModel updateBook(BookModel newBook, String isbn){
