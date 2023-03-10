@@ -16,6 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -346,4 +347,59 @@ class BookManagerTest {
         );
         verify(repository.save(newBook));
     }
+
+    @Test
+    public void isbnValidationTest(){
+        //Given
+        final String validTenDigitIsbn = "5006009004";
+        final String validThirteenDigitIsbn = "6004002006005";
+        final String invalidIsbn = "56043";
+        final String emptyString = "";
+        final String nullIsbn = null;
+        //Then
+        assertAll(
+                "Isbn validation",
+                () -> { assertTrue(underTest.isISBNValid(validTenDigitIsbn), "tenDigitIsbn"); },
+                () -> { assertTrue( underTest.isISBNValid(validThirteenDigitIsbn) , "thirteenDigitIsbn" );},
+                () -> { assertFalse( underTest.isISBNValid(invalidIsbn), "invalidIsbn" ); },
+                () -> { assertFalse( underTest.isISBNValid(emptyString), "emptyIsbn"); },
+                () -> { assertFalse( underTest.isISBNValid(nullIsbn), "nullIsbn" ); }
+        );
+    }
+
+    @Test
+    public void isbnExistingInDbTest(){
+        //Given
+        String existingIsbn = "5006007045";
+        String nonExistingIsbn = "6006004005";
+        //When
+        when(repository.getBookModelByISBN(existingIsbn)).thenReturn(Optional.of(new BookModel()));
+        when(repository.getBookModelByISBN(nonExistingIsbn)).thenReturn(Optional.empty());
+        //Then
+        assertTrue(underTest.doesIsbnExistInDatabase(existingIsbn));
+        assertFalse(underTest.doesIsbnExistInDatabase(nonExistingIsbn));
+    }
+
+    @Test
+    public void prepareBookToUpdateTest(){
+        //Given
+        BookModel oldBook = exampleSingleBook;
+        BookModel newBook = exampleSingleBook;
+        newBook.setBookTitle("The Hobbit - Part One");
+        newBook.setId(1313);
+        newBook.setInStorage(67);
+        newBook.setBookDescription(null);
+        // When
+        BookModel edited = underTest.prepareBookToUpdate(oldBook,newBook);
+        //Then
+
+        assertAll(
+                "Check properties",
+                () -> { assertEquals( 1 , edited.getId() , "Id cannot change" ); },
+                () -> { assertEquals( newBook.getBookTitle() , edited.getBookTitle() , "BookTitle should change" ); },
+
+        );
+
+    }
+
 }

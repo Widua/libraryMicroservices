@@ -56,7 +56,9 @@ public class BookManager {
     }
 
     public ResponseModel addBook(BookModel book){
-        if (isISBNValid(book.getISBN())){
+        boolean doesIsbnDoesntExistInDb = !doesIsbnExistInDatabase(book.getISBN());
+        boolean isIsbnValid = isISBNValid(book.getISBN());
+        if ( isIsbnValid && doesIsbnDoesntExistInDb ){
             repository.save(book);
             return ResponseModel.builder().status(HttpStatus.CREATED).body(URI.create(String.format("/book/%s",book.getId()))).build();
         }
@@ -81,7 +83,7 @@ public class BookManager {
 
         books.forEach(
                 book -> {
-                    if (!isISBNValid(book.getISBN())){
+                    if (!isISBNValid(book.getISBN()) || doesIsbnExistInDatabase(book.getISBN())){
                         isValid.set(false);
                         errorIndex.set(books.indexOf(book));
                         return;
@@ -112,6 +114,7 @@ public class BookManager {
     }
 
     public boolean doesIsbnExistInDatabase(String isbn){
+        if (isbn == null) return false;
         return repository.getBookModelByISBN(isbn).isPresent();
     }
 
@@ -120,16 +123,24 @@ public class BookManager {
      *   source: https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s13.html
      */
     public boolean isISBNValid(String isbn){
+        if (isbn == null) return false;
         String isbnRegex = "(?=[0-9]*$)(?:.{10}|.{13})";
         return isbn.matches(isbnRegex);
     }
 
     public ResponseModel updateBook(BookModel newBook, String isbn){
+        return null;
         // TODO
     }
 
     public ResponseModel updateBook(BookModel newBook, Integer id){
+        return null;
         // TODO
+    }
+
+    public BookModel prepareBookToUpdate( BookModel oldBook , BookModel newBook ){
+        newBook.setId(oldBook.getId());
+        return oldBook;
     }
 
 }
