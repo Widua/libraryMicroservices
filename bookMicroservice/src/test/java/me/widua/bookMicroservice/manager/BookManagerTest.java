@@ -384,7 +384,7 @@ class BookManagerTest {
     public void prepareBookToUpdateTest(){
         //Given
         BookModel oldBook = exampleSingleBook;
-        BookModel newBook = exampleSingleBook;
+        BookModel newBook =new BookModel();
         newBook.setBookTitle("The Hobbit - Part One");
         newBook.setId(1313);
         newBook.setInStorage(67);
@@ -397,7 +397,7 @@ class BookManagerTest {
                 "Check properties",
                 () -> { assertEquals( 1 , edited.getId() , "Id cannot change" ); },
                 () -> { assertEquals( newBook.getBookTitle() , edited.getBookTitle() , "BookTitle should change" ); },
-
+                () -> { assertEquals(oldBook.getBookDescription() , edited.getBookDescription(), "Null shouldnt be accepted"); }
         );
 
     }
