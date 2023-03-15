@@ -147,13 +147,32 @@ public class BookManager {
         return ResponseModel
                 .builder()
                 .status(HttpStatus.OK)
-                .body("Book updated successfully!")
+                .body("Book successfully updated!")
                 .build();
     }
 
     public ResponseModel updateBook(BookModel newBook, Integer id){
-        return null;
-        // TODO
+        if (id == null){
+            return ResponseModel.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("ID cannot be null!")
+                    .build();
+        }
+
+        Optional<BookModel> oldBook = repository.findById(id) ;
+
+        if (oldBook.isEmpty()){
+            return ResponseModel.builder().status(HttpStatus.BAD_REQUEST)
+                    .body(String.format("Book with id: %s does not exist!",id))
+                    .build();
+        }
+
+        repository.save( prepareBookToUpdate(oldBook.get(),newBook) );
+        return ResponseModel
+                .builder()
+                .status(HttpStatus.OK)
+                .body("Book successfully updated!")
+                .build();
     }
 
     public BookModel prepareBookToUpdate( BookModel oldBook , BookModel newBook ){

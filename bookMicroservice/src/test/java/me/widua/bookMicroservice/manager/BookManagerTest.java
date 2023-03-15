@@ -301,7 +301,7 @@ class BookManagerTest {
                 () -> assertEquals(HttpStatus.OK , response.getStatus()),
                 () -> assertEquals("Book successfully updated!", response.getBody())
         );
-        verify(repository.save(newBook));
+        verify(repository).save(newBook);
     }
 
     @Test
@@ -318,7 +318,7 @@ class BookManagerTest {
     }
 
     @Test
-    public void tryUpdateBookByIsbnWithInvalidId(){
+    public void tryUpdateBookByIdWithInvalidId(){
         //Given
         final Integer id = null;
         exampleSingleBook.setInStorage(55);
@@ -326,7 +326,7 @@ class BookManagerTest {
         ResponseModel response = underTest.updateBook(exampleSingleBook, id);
         //Then
         assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
-        assertEquals( String.format("ISBN: %s is not valid!", id) , response.getBody() );
+        assertEquals( "ID cannot be null!" , response.getBody() );
     }
 
     @Test
@@ -345,7 +345,7 @@ class BookManagerTest {
                 () -> assertEquals(HttpStatus.OK , response.getStatus()),
                 () -> assertEquals("Book successfully updated!", response.getBody())
         );
-        verify(repository.save(newBook));
+        verify(repository).save(newBook);
     }
 
     @Test
