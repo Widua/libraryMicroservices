@@ -16,12 +16,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
-public class BookManager {
+public class BookServiceImpl {
 
     private final BookRepository repository;
 
     @Autowired
-    public BookManager(BookRepository repository){
+    public BookServiceImpl(BookRepository repository){
         this.repository = repository ;
     }
 

@@ -1,6 +1,7 @@
 package me.widua.bookMicroservice.api;
 
-import me.widua.bookMicroservice.manager.BookManager;
+
+import me.widua.bookMicroservice.manager.BookServiceImpl;
 import me.widua.bookMicroservice.models.ResponseModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/")
 public class BookApi {
-    private final BookManager manager ;
+    private final BookServiceImpl manager ;
     @Autowired
-    public BookApi (BookManager manager){
+    public BookApi (BookServiceImpl manager){
         this.manager = manager;
     }
 

@@ -1,11 +1,11 @@
-package me.widua.bookMicroservice.manager;
+package me.widua.bookMicroservice.service;
 
 import me.widua.bookMicroservice.BookMicroserviceApplication;
+import me.widua.bookMicroservice.manager.BookServiceImpl;
 import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
 import me.widua.bookMicroservice.models.types.BookType;
 import me.widua.bookMicroservice.repositories.BookRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,17 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.MOCK,
@@ -33,9 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
 @Transactional
-class BookManagerTest {
+class BookServiceImplTest {
     @Autowired
-    private BookManager underTest ;
+    private BookServiceImpl underTest ;
     @MockBean
     private BookRepository repository ;
 
