@@ -4,12 +4,18 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import me.widua.bookMicroservice.models.types.BookType;
+import org.springframework.stereotype.Indexed;
 
 import java.util.Objects;
 
 @Entity
 @Getter
 @Setter
+@Table(
+        indexes = {
+                @Index(columnList = "isbn")
+        }
+)
 public class BookModel {
 
     @Id
@@ -17,6 +23,7 @@ public class BookModel {
     private Integer id;
     private String author ;
     private String bookTitle;
+
     private String ISBN ;
     private String bookDescription;
     @Enumerated(EnumType.STRING)

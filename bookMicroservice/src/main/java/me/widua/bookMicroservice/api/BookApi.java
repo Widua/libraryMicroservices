@@ -1,8 +1,9 @@
 package me.widua.bookMicroservice.api;
 
 
-import me.widua.bookMicroservice.manager.BookServiceImpl;
+import me.widua.bookMicroservice.service.BookServiceImpl;
 import me.widua.bookMicroservice.models.ResponseModel;
+import me.widua.bookMicroservice.service.BookServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

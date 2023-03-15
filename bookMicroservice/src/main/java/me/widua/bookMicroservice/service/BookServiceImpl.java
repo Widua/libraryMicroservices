@@ -1,23 +1,23 @@
-package me.widua.bookMicroservice.manager;
+package me.widua.bookMicroservice.service;
 
 import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
 import me.widua.bookMicroservice.repositories.BookRepository;
+import org.assertj.core.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
 import java.net.URI;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Service
-public class BookServiceImpl {
+import java.util.stream.Collectors;
 
+@Service
+public class BookServiceImpl implements BookService {
     private final BookRepository repository;
 
     @Autowired
@@ -25,6 +25,7 @@ public class BookServiceImpl {
         this.repository = repository ;
     }
 
+    @Override
     public ResponseModel getBooks(){
 
         List<BookModel> books = (List<BookModel>) repository.findAll();
@@ -36,6 +37,9 @@ public class BookServiceImpl {
         }
     }
 
+
+    @Override
+
     public ResponseModel getBook(Integer id){
         Optional<BookModel> book = repository.findById(id);
         if (book.isEmpty()){
@@ -44,7 +48,9 @@ public class BookServiceImpl {
         return ResponseModel.builder().status(HttpStatus.OK).body(book).build();
     }
 
-    public ResponseModel getBookByISBN(String isbn){
+
+    @Override
+    public ResponseModel getBook(String isbn){
         Optional<BookModel> queriedBookFromDb = repository.getBookModelByISBN(isbn);
         if (queriedBookFromDb.isEmpty()){
             return ResponseModel.builder().status(HttpStatus.NO_CONTENT).build();
@@ -52,36 +58,59 @@ public class BookServiceImpl {
         return ResponseModel.builder().status(HttpStatus.OK).body(queriedBookFromDb.get()).build();
     }
 
+
+    @Override
     public ResponseModel addBook(BookModel book){
-        if (isISBNValid(book.getISBN())){
+        boolean doesIsbnDoesntExistInDb = !doesIsbnExistInDatabase(book.getISBN());
+        boolean isIsbnValid = isISBNValid(book.getISBN());
+        if ( isIsbnValid && doesIsbnDoesntExistInDb ){
             repository.save(book);
             return ResponseModel.builder().status(HttpStatus.CREATED).body(URI.create(String.format("/book/%s",book.getId()))).build();
         }
         return ResponseModel.builder().status(HttpStatus.BAD_REQUEST).body(String.format("The ISBN number %s is used by other book!", book.getISBN())).build();
     }
 
-    public ResponseModel addBooks(Iterable<BookModel> books){
-        AtomicInteger size = new AtomicInteger(0);
-        AtomicBoolean valid = new AtomicBoolean(true);
+    @Override
+    public ResponseModel addBooks(List<BookModel> books){
+        int size = books.size();
+        AtomicInteger errorIndex = new AtomicInteger(0);
+        AtomicBoolean isValid = new AtomicBoolean(true);
+
+        Set<String> setOfIsbn = Streams
+                .stream(books)
+                .map(BookModel::getISBN)
+                .collect(Collectors.toSet());
+
+        if (setOfIsbn.size() != size){
+            return ResponseModel.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("You provided at least two books with same ISBN! ISBN for each book must be unique!").build();
+        }
         books.forEach(
                 book -> {
-                    if (isISBNValid(book.getISBN())){
-                        size.addAndGet(1);
-                    }else {
-                        valid.set(false);
+                    if (!isISBNValid(book.getISBN()) || doesIsbnExistInDatabase(book.getISBN())){
+                        isValid.set(false);
+                        errorIndex.set(books.indexOf(book));
                         return;
                     }
                 }
         );
 
-        if (valid.get()){
+        if (isValid.get()){
             repository.saveAll(books);
-            return ResponseModel.builder().status(HttpStatus.CREATED).body(String.format("Total number of created books %s",size.get())).build();
+            return ResponseModel.builder().status(HttpStatus.CREATED).body(String.format("Total number of created books %s",size)).build();
         }
-        return ResponseModel.builder().status(HttpStatus.BAD_REQUEST).body(String.format("Adding stopped, because of bad ISBN in %s index", size)).build();
+        return ResponseModel
+                .builder()
+                .status(HttpStatus.BAD_REQUEST)
+                .body(
+                        String.format("Adding stopped, because book in %s index exist in database!"
+                                , errorIndex.get()))
+                .build();
     }
 
-    public ResponseModel getBooksByAuthor(String author) {
+    @Override
+    public ResponseModel getBooks(String author) {
         Optional<List<BookModel>> books = repository.getBookModelsByAuthor(author);
         if (books.isEmpty()){
             return ResponseModel.builder().status(HttpStatus.NO_CONTENT).build();
@@ -90,70 +119,85 @@ public class BookServiceImpl {
         return ResponseModel.builder().status(HttpStatus.OK).body(books.get()).build();
     }
 
-    public ResponseModel updateBook(BookModel newBook, String isbn, boolean nullAcceptance){
-
-        if (  !isISBNValid(newBook.getISBN())  &&  !newBook.getISBN().equals(isbn)  ){
-            return ResponseModel.builder().status(HttpStatus.BAD_REQUEST).body(String.format("ISBN: %s is not valid!",newBook.getISBN())).build();
-        }
-
-        Optional<BookModel> bookBeforeUpdate = repository.getBookModelByISBN(isbn) ;
-
-        if (bookBeforeUpdate.isEmpty()){
-            return ResponseModel.builder().status(HttpStatus.BAD_REQUEST).body(String.format("Book with ISBN: %s does not exist!", isbn)).build() ;
-        }
-
-        BookModel updatedBook = updateBookModel( bookBeforeUpdate.get() , newBook , nullAcceptance) ;
-        repository.save(updatedBook);
-
-        return ResponseModel.builder().status(HttpStatus.OK).body("Successfully updated book!").build();
+    public boolean doesIsbnExistInDatabase(String isbn){
+        if (isbn == null) return false;
+        return repository.getBookModelByISBN(isbn).isPresent();
     }
 
-    public ResponseModel updateBook(BookModel newBook, Integer id, boolean nullAcceptance){
-
-
-        return ResponseModel.builder().status(HttpStatus.OK).body("Successfully updated book!").build();
+    /* Simplified ISBN validation, on production regex can be switched to:
+     *  (?:ISBN(?:-13)?:?\ )?(?=[0-9]{13}$|(?=(?:[0-9]+[-\ ]){4})[-\ 0-9]{17}$)97[89][-\ ]?[0-9]{1,5}[-\ ]?[0-9]+[-\ ]?[0-9]+[-\ ]?[0-9]
+     *   source: https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s13.html
+     */
+    public boolean isISBNValid(String isbn){
+        if (isbn == null) return false;
+        String isbnRegex = "(?=[0-9]*$)(?:.{10}|.{13})";
+        return isbn.matches(isbnRegex);
     }
 
+    @Override
+    public ResponseModel updateBook(BookModel newBook, String isbn){
 
-
-    private boolean isISBNValid(String isbn){
-        Set<String> setOfIsbn = new HashSet<>();
-        repository.findAll().forEach(book -> {setOfIsbn.add(book.getISBN());});
-
-        if (setOfIsbn.contains(isbn) && isbn == null){
-            return false;
+        if (!isISBNValid(isbn)){
+            return ResponseModel.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(String.format("ISBN: %s is not valid!",isbn))
+                    .build();
         }
 
-        return true;
+        if (!doesIsbnExistInDatabase(isbn)){
+            return ResponseModel.builder().status(HttpStatus.BAD_REQUEST)
+                    .body(String.format("Book with ISBN: %s does not exist!",isbn))
+                    .build();
+        }
+        BookModel oldBook = repository.getBookModelByISBN(isbn).get();
+        repository.save( prepareBookToUpdate(oldBook,newBook) );
+        return ResponseModel
+                .builder()
+                .status(HttpStatus.OK)
+                .body("Book successfully updated!")
+                .build();
+    }
+    @Override
+    public ResponseModel updateBook(BookModel newBook, Integer id){
+        if (id == null){
+            return ResponseModel.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("ID cannot be null!")
+                    .build();
+        }
+
+        Optional<BookModel> oldBook = repository.findById(id) ;
+
+        if (oldBook.isEmpty()){
+            return ResponseModel.builder().status(HttpStatus.BAD_REQUEST)
+                    .body(String.format("Book with id: %s does not exist!",id))
+                    .build();
+        }
+
+        repository.save( prepareBookToUpdate(oldBook.get(),newBook) );
+        return ResponseModel
+                .builder()
+                .status(HttpStatus.OK)
+                .body("Book successfully updated!")
+                .build();
     }
 
-    private BookModel updateBookModel(BookModel oldBook, BookModel newBook, boolean nullAcceptance){
-        repository.deleteById(oldBook.getId());
-
-        if (newBook.getISBN() != null) {
-            oldBook.setISBN(newBook.getISBN());
-        }
-
-        if (newBook.getAuthor() != null || nullAcceptance){
+    public BookModel prepareBookToUpdate( BookModel oldBook , BookModel newBook ){
+        if(newBook.getAuthor() != null){
             oldBook.setAuthor(newBook.getAuthor());
         }
-
-        if (newBook.getBookDescription() != null || nullAcceptance){
-            oldBook.setBookDescription(newBook.getBookDescription());
-        }
-
-        if (newBook.getBookType() != null || nullAcceptance){
-            oldBook.setBookType(newBook.getBookType());
-        }
-
-        if (newBook.getBookTitle() != null || nullAcceptance){
+        if (newBook.getBookTitle() != null){
             oldBook.setBookTitle(newBook.getBookTitle());
         }
-
-        if (newBook.getInStorage() != null || nullAcceptance){
+        if (newBook.getBookDescription() != null){
+            oldBook.setBookDescription(newBook.getBookDescription());
+        }
+        if (newBook.getBookType() != null){
+            oldBook.setBookType(newBook.getBookType());
+        }
+        if (newBook.getInStorage() != null){
             oldBook.setInStorage(newBook.getInStorage());
         }
-
         return oldBook;
     }
-}
+    }
