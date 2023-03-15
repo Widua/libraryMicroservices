@@ -13,11 +13,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import java.util.stream.Collectors;
 
 @Service
-public class BookServiceImpl {
-
+public class BookServiceImpl implements BookService {
     private final BookRepository repository;
 
     @Autowired
@@ -25,6 +25,7 @@ public class BookServiceImpl {
         this.repository = repository ;
     }
 
+    @Override
     public ResponseModel getBooks(){
 
         List<BookModel> books = (List<BookModel>) repository.findAll();
@@ -36,6 +37,9 @@ public class BookServiceImpl {
         }
     }
 
+
+    @Override
+
     public ResponseModel getBook(Integer id){
         Optional<BookModel> book = repository.findById(id);
         if (book.isEmpty()){
@@ -44,7 +48,9 @@ public class BookServiceImpl {
         return ResponseModel.builder().status(HttpStatus.OK).body(book).build();
     }
 
-    public ResponseModel getBookByISBN(String isbn){
+
+    @Override
+    public ResponseModel getBook(String isbn){
         Optional<BookModel> queriedBookFromDb = repository.getBookModelByISBN(isbn);
         if (queriedBookFromDb.isEmpty()){
             return ResponseModel.builder().status(HttpStatus.NO_CONTENT).build();
@@ -52,6 +58,8 @@ public class BookServiceImpl {
         return ResponseModel.builder().status(HttpStatus.OK).body(queriedBookFromDb.get()).build();
     }
 
+
+    @Override
     public ResponseModel addBook(BookModel book){
         boolean doesIsbnDoesntExistInDb = !doesIsbnExistInDatabase(book.getISBN());
         boolean isIsbnValid = isISBNValid(book.getISBN());
@@ -62,6 +70,7 @@ public class BookServiceImpl {
         return ResponseModel.builder().status(HttpStatus.BAD_REQUEST).body(String.format("The ISBN number %s is used by other book!", book.getISBN())).build();
     }
 
+    @Override
     public ResponseModel addBooks(List<BookModel> books){
         int size = books.size();
         AtomicInteger errorIndex = new AtomicInteger(0);
@@ -100,7 +109,8 @@ public class BookServiceImpl {
                 .build();
     }
 
-    public ResponseModel getBooksByAuthor(String author) {
+    @Override
+    public ResponseModel getBooks(String author) {
         Optional<List<BookModel>> books = repository.getBookModelsByAuthor(author);
         if (books.isEmpty()){
             return ResponseModel.builder().status(HttpStatus.NO_CONTENT).build();
@@ -124,6 +134,7 @@ public class BookServiceImpl {
         return isbn.matches(isbnRegex);
     }
 
+    @Override
     public ResponseModel updateBook(BookModel newBook, String isbn){
 
         if (!isISBNValid(isbn)){
@@ -146,7 +157,7 @@ public class BookServiceImpl {
                 .body("Book successfully updated!")
                 .build();
     }
-
+    @Override
     public ResponseModel updateBook(BookModel newBook, Integer id){
         if (id == null){
             return ResponseModel.builder()
@@ -189,5 +200,4 @@ public class BookServiceImpl {
         }
         return oldBook;
     }
-
     }
