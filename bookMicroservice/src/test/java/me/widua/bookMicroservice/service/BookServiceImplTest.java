@@ -135,7 +135,7 @@ class BookServiceImplTest {
         //Given
         String isbn = "5006001200";
         //When
-        underTest.getBookByISBN(isbn);
+        underTest.getBook(isbn);
         //Then
         verify(repository).getBookModelByISBN(isbn);
     }
@@ -146,7 +146,7 @@ class BookServiceImplTest {
         String isbn = "5006001200";
         //When
         when(repository.getBookModelByISBN(isbn)).thenReturn(Optional.empty());
-        ResponseModel response = underTest.getBookByISBN(isbn);
+        ResponseModel response = underTest.getBooks(isbn);
         //Then
         assertEquals(HttpStatus.NO_CONTENT , response.getStatus());
     }
@@ -252,7 +252,7 @@ class BookServiceImplTest {
                                         }).toList())
                 );
 
-        ResponseModel response = underTest.getBooksByAuthor(author);
+        ResponseModel response = underTest.getBooks(author);
         Optional<List<BookModel>> optionalResponse = Optional.of( (List<BookModel>) response.getBody() )  ;
         //Then
         assertEquals(HttpStatus.OK,response.getStatus());

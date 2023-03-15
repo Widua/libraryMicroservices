@@ -4,6 +4,8 @@ import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public interface BookService {
 
@@ -12,8 +14,8 @@ public interface BookService {
     ResponseModel getBook(Integer id);
     ResponseModel getBook(String isbn);
     ResponseModel addBook(BookModel book);
-    ResponseModel addBooks(Iterable<BookModel> books);
-    ResponseModel updateBook(BookModel newBook, String isbn, boolean nullAcceptance);
-    ResponseModel updateBook(BookModel newBook, Integer id, boolean nullAcceptance);
+    ResponseModel addBooks(List<BookModel> books);
+    ResponseModel updateBook(BookModel newBook, String isbn);
+    ResponseModel updateBook(BookModel newBook, Integer id);
 }
 
