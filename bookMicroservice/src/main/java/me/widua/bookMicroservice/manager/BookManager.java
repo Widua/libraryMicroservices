@@ -129,8 +129,26 @@ public class BookManager {
     }
 
     public ResponseModel updateBook(BookModel newBook, String isbn){
-        return null;
-        // TODO
+
+        if (!isISBNValid(isbn)){
+            return ResponseModel.builder()
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(String.format("ISBN: %s is not valid!",isbn))
+                    .build();
+        }
+
+        if (!doesIsbnExistInDatabase(isbn)){
+            return ResponseModel.builder().status(HttpStatus.BAD_REQUEST)
+                    .body(String.format("Book with ISBN: %s does not exist!",isbn))
+                    .build();
+        }
+        BookModel oldBook = repository.getBookModelByISBN(isbn).get();
+        repository.save( prepareBookToUpdate(oldBook,newBook) );
+        return ResponseModel
+                .builder()
+                .status(HttpStatus.OK)
+                .body("Book updated successfully!")
+                .build();
     }
 
     public ResponseModel updateBook(BookModel newBook, Integer id){
@@ -139,7 +157,21 @@ public class BookManager {
     }
 
     public BookModel prepareBookToUpdate( BookModel oldBook , BookModel newBook ){
-        newBook.setId(oldBook.getId());
+        if(newBook.getAuthor() != null){
+            oldBook.setAuthor(newBook.getAuthor());
+        }
+        if (newBook.getBookTitle() != null){
+            oldBook.setBookTitle(newBook.getBookTitle());
+        }
+        if (newBook.getBookDescription() != null){
+            oldBook.setBookDescription(newBook.getBookDescription());
+        }
+        if (newBook.getBookType() != null){
+            oldBook.setBookType(newBook.getBookType());
+        }
+        if (newBook.getInStorage() != null){
+            oldBook.setInStorage(newBook.getInStorage());
+        }
         return oldBook;
     }
 
