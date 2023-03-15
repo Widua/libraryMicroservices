@@ -1,4 +1,4 @@
-package me.widua.bookMicroservice.manager;
+package me.widua.bookMicroservice.service;
 
 import me.widua.bookMicroservice.BookMicroserviceApplication;
 import me.widua.bookMicroservice.models.BookModel;
@@ -16,7 +16,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,8 +33,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @ActiveProfiles("test")
 @Transactional
-class BookManagerTest {
-    private BookManager underTest ;
+class BookServiceImplTest {
+    private BookServiceImpl underTest ;
     @Mock
     private BookRepository repository ;
 
@@ -46,7 +45,7 @@ class BookManagerTest {
 
     @BeforeEach
     public void setUp(){
-        underTest = new BookManager(repository);
+        underTest = new BookServiceImpl(repository);
         exampleBooks = Arrays.asList(
                 new BookModel(
                         1,

@@ -1,4 +1,4 @@
-package me.widua.bookMicroservice.manager;
+package me.widua.bookMicroservice.service;
 
 import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
@@ -9,22 +9,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 @Service
-public class BookManager {
+public class BookServiceImpl {
 
     private final BookRepository repository;
 
     @Autowired
-    public BookManager(BookRepository repository){
+    public BookServiceImpl(BookRepository repository){
         this.repository = repository ;
     }
 
