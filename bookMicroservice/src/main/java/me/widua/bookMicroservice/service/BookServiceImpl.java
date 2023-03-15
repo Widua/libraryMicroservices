@@ -7,7 +7,6 @@ import org.assertj.core.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
@@ -78,7 +77,6 @@ public class BookServiceImpl {
                     .status(HttpStatus.BAD_REQUEST)
                     .body("You provided at least two books with same ISBN! ISBN for each book must be unique!").build();
         }
-
         books.forEach(
                 book -> {
                     if (!isISBNValid(book.getISBN()) || doesIsbnExistInDatabase(book.getISBN())){
@@ -192,4 +190,4 @@ public class BookServiceImpl {
         return oldBook;
     }
 
-}
+    }

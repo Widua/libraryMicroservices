@@ -1,6 +1,5 @@
 package me.widua.bookMicroservice.service;
 
-import me.widua.bookMicroservice.BookMicroserviceApplication;
 import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
 import me.widua.bookMicroservice.models.types.BookType;
@@ -8,9 +7,9 @@ import me.widua.bookMicroservice.repositories.BookRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -22,36 +21,32 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-        classes = BookMicroserviceApplication.class
-)
-@ExtendWith({SpringExtension.class, MockitoExtension.class})
+@ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
 @Transactional
+@SpringBootTest
 class BookServiceImplTest {
+    @Autowired
     private BookServiceImpl underTest ;
-    @Mock
+    @MockBean
     private BookRepository repository ;
 
-    List<BookModel> exampleBooks ;
-    BookModel exampleInvalidBook ;
-    BookModel exampleSingleBook ;
-
+    private List<BookModel> exampleBooks;
+    private BookModel exampleInvalidBook;
+    private BookModel exampleSingleBook;
 
     @BeforeEach
     public void setUp(){
-        underTest = new BookServiceImpl(repository);
-        exampleBooks = Arrays.asList(
+        exampleBooks =  Arrays.asList(
                 new BookModel(
-                        1,
                         "J.K. Rowling",
                         "Harry Potter and the Philosopher's Stone" ,
-                        "7008004567" ,
+                        "5006001200" ,
                         "First book of Harry Potter adventures" ,
                         BookType.PHYSICAL ,
                         15),
@@ -59,7 +54,7 @@ class BookServiceImplTest {
                         2,
                         "J.K. Rowling",
                         "Harry Potter and the Philosopher's Stone" ,
-                        "1001002003" ,
+                        "7008004567" ,
                         "First book of Harry Potter adventures" ,
                         BookType.E_BOOK ,
                         15),
@@ -217,6 +212,7 @@ class BookServiceImplTest {
         invalid.setISBN("7008004567");
         toSave.add(invalid);
         //When
+        when( repository.getBookModelByISBN(invalid.getISBN()) ).thenReturn( Optional.of(exampleInvalidBook) );
         ResponseModel response = underTest.addBooks(toSave);
         //Then
         assertEquals(HttpStatus.BAD_REQUEST , response.getStatus());
@@ -226,7 +222,7 @@ class BookServiceImplTest {
     @Test
     public void tryAddBooksWithISBNThatExistInDatabase(){
         //Given
-        final String isbn = "1001002003";
+        final String isbn = "7008004567";
         List<BookModel> toSave = exampleBooks;
         //When
         when( repository.getBookModelByISBN( anyString() )).thenReturn( Optional.empty() );
