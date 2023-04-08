@@ -2,6 +2,7 @@ package me.widua.bookMicroservice.service;
 
 import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
+import me.widua.bookMicroservice.models.exception.InvalidIsbnException;
 import me.widua.bookMicroservice.repositories.BookRepository;
 import org.assertj.core.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,7 +121,7 @@ public class BookServiceImpl implements BookService {
     }
 
     public boolean doesIsbnExistInDatabase(String isbn){
-        if (isbn == null) return false;
+        if(isbn == null) throw new InvalidIsbnException("ISBN cannot be null.");
         return repository.getBookModelByISBN(isbn).isPresent();
     }
 
@@ -129,9 +130,10 @@ public class BookServiceImpl implements BookService {
      *   source: https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s13.html
      */
     public boolean isISBNValid(String isbn){
-        if (isbn == null) return false;
-        String isbnRegex = "(?=[0-9]*$)(?:.{10}|.{13})";
-        return isbn.matches(isbnRegex);
+        if (isbn == null) throw new InvalidIsbnException("ISBN cannot be null.");
+        String isbnRegex = "[0-9]{10}|[0-9]{13}";
+        if (isbn.matches(isbnRegex)){ return true; }
+        throw new InvalidIsbnException("Invalid ISBN");
     }
 
     @Override

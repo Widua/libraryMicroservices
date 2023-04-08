@@ -3,6 +3,9 @@ package me.widua.bookMicroservice.service;
 
 import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
+import me.widua.bookMicroservice.models.exception.BookAlreadyExistException;
+import me.widua.bookMicroservice.models.exception.BookNotExistException;
+import me.widua.bookMicroservice.models.exception.InvalidIsbnException;
 import me.widua.bookMicroservice.models.types.BookType;
 
 import me.widua.bookMicroservice.repositories.BookRepository;
@@ -164,7 +167,7 @@ class BookServiceImplTest {
     }
 
     @Test
-    public void addBookWithInvalidIsbn(){
+    public void addBookWithDuplicatedIsbn(){
         //Given
         String isbn = "9009001200";
         BookModel toSave = new BookModel(
@@ -176,9 +179,9 @@ class BookServiceImplTest {
                 15);
         //When
         when(repository.getBookModelByISBN(isbn)).thenReturn(Optional.of(toSave));
-        ResponseModel responseModel = underTest.addBook(toSave);
         //Then
-        assertEquals(responseModel.getStatus() , HttpStatus.BAD_REQUEST);
+        Exception ex = assertThrows( BookAlreadyExistException.class , () -> { underTest.addBook(toSave); } );
+        assertEquals( String.format("Book with ISBN: %s already exist in database.",isbn) ,ex.getMessage() );
     }
 
     @Test
@@ -192,10 +195,9 @@ class BookServiceImplTest {
                 "First book of Harry Potter adventures" ,
                 BookType.PHYSICAL ,
                 15);
-        //When
-        ResponseModel responseModel = underTest.addBook(toSave);
         //Then
-        assertEquals(responseModel.getStatus() , HttpStatus.BAD_REQUEST);
+        Exception ex = assertThrows(InvalidIsbnException.class , ()-> { underTest.addBook(toSave); });
+        assertEquals("ISBN cannot be null.",ex.getMessage());
     }
 
     @Test
@@ -217,10 +219,9 @@ class BookServiceImplTest {
         toSave.add(invalid);
         //When
         when( repository.getBookModelByISBN(invalid.getISBN()) ).thenReturn( Optional.of(exampleInvalidBook) );
-        ResponseModel response = underTest.addBooks(toSave);
         //Then
-        assertEquals(HttpStatus.BAD_REQUEST , response.getStatus());
-        assertEquals("You provided at least two books with same ISBN! ISBN for each book must be unique!" , response.getBody());
+        Exception ex = assertThrows( BookAlreadyExistException.class , () -> { underTest.addBooks(toSave); } );
+        assertEquals( String.format("Book with ISBN: %s already exist in database.",invalid.getISBN()), ex.getMessage() );
     }
 
     @Test
@@ -231,10 +232,9 @@ class BookServiceImplTest {
         //When
         when( repository.getBookModelByISBN( anyString() )).thenReturn( Optional.empty() );
         when( repository.getBookModelByISBN( eq(isbn) )).thenReturn(Optional.of(exampleBooks.get(1)));
-        ResponseModel response = underTest.addBooks(toSave);
         //Then
-        assertEquals(HttpStatus.BAD_REQUEST , response.getStatus() );
-        assertEquals("Adding stopped, because book in 1 index exist in database!",response.getBody());
+        Exception exception = assertThrows( BookAlreadyExistException.class , () -> { underTest.addBooks(toSave); } );
+        assertEquals( String.format("Book with ISBN: %s already exist.",isbn), exception.getMessage());
     }
 
     @Test
@@ -266,10 +266,9 @@ class BookServiceImplTest {
         exampleSingleBook.setInStorage(55);
         //When
         when( repository.getBookModelByISBN(isbn) ).thenReturn(Optional.empty());
-        ResponseModel response = underTest.updateBook(exampleSingleBook,isbn);
         //Then
-        assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
-        assertEquals( String.format("Book with ISBN: %s does not exist!",isbn) , response.getBody() );
+        Exception ex = assertThrows(BookNotExistException.class , () -> { underTest.updateBook(exampleSingleBook,isbn); });
+        assertEquals( "Book with provided ISBN does not exist." , ex.getMessage() );
     }
 
     @Test
@@ -277,11 +276,9 @@ class BookServiceImplTest {
         //Given
         final String isbn = null;
         exampleSingleBook.setInStorage(55);
-        //When
-        ResponseModel response = underTest.updateBook(exampleSingleBook,isbn);
         //Then
-        assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
-        assertEquals( String.format("ISBN: %s is not valid!",isbn) , response.getBody() );
+        Exception ex = assertThrows( InvalidIsbnException.class , () -> { underTest.updateBook(exampleSingleBook,isbn); } );
+        assertEquals( "ISBN cannot be null." , ex.getMessage() );
     }
 
     @Test
@@ -310,10 +307,9 @@ class BookServiceImplTest {
         exampleSingleBook.setInStorage(55);
         //When
         when( repository.findById(id)).thenReturn(Optional.empty());
-        ResponseModel response = underTest.updateBook(exampleSingleBook,id);
         //Then
-        assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
-        assertEquals( String.format("Book with id: %s does not exist!",id) , response.getBody() );
+        Exception ex = assertThrows( BookNotExistException.class , () -> { underTest.updateBook(exampleSingleBook,id); } );
+        assertEquals("Book with provided id does not exist." , ex.getMessage());
     }
 
     @Test
@@ -321,11 +317,11 @@ class BookServiceImplTest {
         //Given
         final Integer id = null;
         exampleSingleBook.setInStorage(55);
-        //When
-        ResponseModel response = underTest.updateBook(exampleSingleBook, id);
         //Then
-        assertEquals( HttpStatus.BAD_REQUEST , response.getStatus() );
-        assertEquals( "ID cannot be null!" , response.getBody() );
+        Exception ex = assertThrows( IllegalArgumentException.class , () -> {
+            underTest.updateBook(exampleSingleBook,id);
+        } );
+        assertEquals("Id cannot be null." , ex.getMessage());
     }
 
     @Test
@@ -359,10 +355,23 @@ class BookServiceImplTest {
         assertAll(
                 "Isbn validation",
                 () -> { assertTrue(underTest.isISBNValid(validTenDigitIsbn), "tenDigitIsbn"); },
-                () -> { assertTrue( underTest.isISBNValid(validThirteenDigitIsbn) , "thirteenDigitIsbn" );},
-                () -> { assertFalse( underTest.isISBNValid(invalidIsbn), "invalidIsbn" ); },
-                () -> { assertFalse( underTest.isISBNValid(emptyString), "emptyIsbn"); },
-                () -> { assertFalse( underTest.isISBNValid(nullIsbn), "nullIsbn" ); }
+                () -> { assertTrue( underTest.isISBNValid(validThirteenDigitIsbn) , "thirteenDigitIsbn" );}
+        );
+
+        assertAll(
+                "Unsuccessful validation tests",
+                () -> {
+                    Exception ex = assertThrows( InvalidIsbnException.class , () -> { underTest.isISBNValid(invalidIsbn); }  );
+                    assertEquals("Invalid ISBN" , ex.getMessage()) ;
+                },
+                () -> {
+                    Exception ex = assertThrows( InvalidIsbnException.class , () -> { underTest.isISBNValid(emptyString); }  );
+                    assertEquals("Invalid ISBN" , ex.getMessage());
+                },
+                () -> {
+                    Exception ex = assertThrows( InvalidIsbnException.class , () -> { underTest.isISBNValid(nullIsbn); }  );
+                    assertEquals("ISBN cannot be null." , ex.getMessage());
+                }
         );
     }
 
