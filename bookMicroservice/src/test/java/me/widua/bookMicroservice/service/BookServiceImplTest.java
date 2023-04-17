@@ -167,7 +167,7 @@ class BookServiceImplTest {
     }
 
     @Test
-    public void addBookWithDuplicatedIsbn(){
+    public void addBookThatExistInDatabase(){
         //Given
         String isbn = "9009001200";
         BookModel toSave = new BookModel(
@@ -178,10 +178,10 @@ class BookServiceImplTest {
                 BookType.PHYSICAL ,
                 15);
         //When
-        when(repository.getBookModelByISBN(isbn)).thenReturn(Optional.of(toSave));
+        when(repository.existsBookModelByISBN(isbn)).thenReturn(true);
         //Then
         Exception ex = assertThrows( BookAlreadyExistException.class , () -> { underTest.addBook(toSave); } );
-        assertEquals( String.format("Book with ISBN: %s already exist in database.",isbn) ,ex.getMessage() );
+        assertEquals( String.format("Book with ISBN: %s already exist.",isbn) ,ex.getMessage() );
     }
 
     @Test
@@ -215,13 +215,13 @@ class BookServiceImplTest {
         //Given
         ArrayList<BookModel> toSave = new ArrayList<>(exampleBooks);
         BookModel invalid = exampleInvalidBook;
-        invalid.setISBN("7008004567");
+        invalid.setISBN(toSave.get(0).getISBN());
         toSave.add(invalid);
         //When
-        when( repository.getBookModelByISBN(invalid.getISBN()) ).thenReturn( Optional.of(exampleInvalidBook) );
+        when( repository.getBookModelByISBN( anyString() ) ).thenReturn( Optional.empty() );
         //Then
-        Exception ex = assertThrows( BookAlreadyExistException.class , () -> { underTest.addBooks(toSave); } );
-        assertEquals( String.format("Book with ISBN: %s already exist in database.",invalid.getISBN()), ex.getMessage() );
+        Exception ex = assertThrows( IllegalArgumentException.class , () -> { underTest.addBooks(toSave); } );
+        assertEquals( "There are duplicated ISBN values in input" , ex.getMessage() );
     }
 
     @Test
@@ -230,8 +230,8 @@ class BookServiceImplTest {
         final String isbn = "7008004567";
         List<BookModel> toSave = exampleBooks;
         //When
-        when( repository.getBookModelByISBN( anyString() )).thenReturn( Optional.empty() );
-        when( repository.getBookModelByISBN( eq(isbn) )).thenReturn(Optional.of(exampleBooks.get(1)));
+        when(repository.existsBookModelByISBN(anyString())).thenReturn(false);
+        when(repository.existsBookModelByISBN(isbn)).thenReturn(true);
         //Then
         Exception exception = assertThrows( BookAlreadyExistException.class , () -> { underTest.addBooks(toSave); } );
         assertEquals( String.format("Book with ISBN: %s already exist.",isbn), exception.getMessage());
@@ -354,38 +354,117 @@ class BookServiceImplTest {
         //Then
         assertAll(
                 "Isbn validation",
-                () -> { assertTrue(underTest.isISBNValid(validTenDigitIsbn), "tenDigitIsbn"); },
-                () -> { assertTrue( underTest.isISBNValid(validThirteenDigitIsbn) , "thirteenDigitIsbn" );}
+                () -> { assertDoesNotThrow( () -> {
+                            underTest.validateISBN(validTenDigitIsbn);
+                    }
+                    );
+
+                    },
+
+                () -> { assertDoesNotThrow( () -> {
+                            underTest.validateISBN(validThirteenDigitIsbn);
+                    }
+                    );
+                }
         );
 
         assertAll(
                 "Unsuccessful validation tests",
                 () -> {
-                    Exception ex = assertThrows( InvalidIsbnException.class , () -> { underTest.isISBNValid(invalidIsbn); }  );
+                    Exception ex = assertThrows( InvalidIsbnException.class , () -> { underTest.validateISBN(invalidIsbn); }  );
                     assertEquals("Invalid ISBN" , ex.getMessage()) ;
                 },
                 () -> {
-                    Exception ex = assertThrows( InvalidIsbnException.class , () -> { underTest.isISBNValid(emptyString); }  );
+                    Exception ex = assertThrows( InvalidIsbnException.class , () -> { underTest.validateISBN(emptyString); }  );
                     assertEquals("Invalid ISBN" , ex.getMessage());
                 },
                 () -> {
-                    Exception ex = assertThrows( InvalidIsbnException.class , () -> { underTest.isISBNValid(nullIsbn); }  );
+                    Exception ex = assertThrows( InvalidIsbnException.class , () -> { underTest.validateISBN(nullIsbn); }  );
                     assertEquals("ISBN cannot be null." , ex.getMessage());
                 }
         );
     }
 
     @Test
-    public void isbnExistingInDbTest(){
+    public void thisBookShouldntExistInDatabaseTest(){
         //Given
-        String existingIsbn = "5006007045";
-        String nonExistingIsbn = "6006004005";
+        String notExistingIsbn = "5006001200";
+        String existingIsbn = "9009009004";
+        Integer nonExistingId = 5;
+        Integer existingId = 2;
         //When
-        when(repository.getBookModelByISBN(existingIsbn)).thenReturn(Optional.of(new BookModel()));
-        when(repository.getBookModelByISBN(nonExistingIsbn)).thenReturn(Optional.empty());
+        when(repository.existsBookModelByISBN(notExistingIsbn)).thenReturn(false);
+        when(repository.existsBookModelByISBN(existingIsbn)).thenReturn(true);
+        when(repository.existsById(nonExistingId)).thenReturn(false);
+        when(repository.existsById(existingId)).thenReturn(true);
         //Then
-        assertTrue(underTest.doesIsbnExistInDatabase(existingIsbn));
-        assertFalse(underTest.doesIsbnExistInDatabase(nonExistingIsbn));
+        assertAll(
+                () -> {
+                    assertThrows( BookAlreadyExistException.class , () -> {
+                        underTest.thisBookShouldntExistInDatabase(existingIsbn);
+                    });
+                },
+                () -> {
+                    assertDoesNotThrow(
+                            () -> {
+                                underTest.thisBookShouldntExistInDatabase(notExistingIsbn);
+                            }
+                    );
+                },
+                () -> {
+                    assertThrows(BookAlreadyExistException.class, ()-> {
+                        underTest.thisBookShouldntExistInDatabase(existingId);
+                    });
+                },
+                () -> {
+                    assertDoesNotThrow(
+                            () -> {
+                                underTest.thisBookShouldntExistInDatabase(nonExistingId);
+                            }
+                    );
+                }
+        );
+    }
+
+    @Test
+    public void thisBookShouldExistInDatabaseTest(){
+        //Given
+        String nonExistingIsbn = "5006001200";
+        String existingIsbn = "9009009004";
+        Integer nonExistingId = 15;
+        Integer existingId = 10;
+        //When
+        when(repository.existsBookModelByISBN(nonExistingIsbn)).thenReturn(false);
+        when(repository.existsBookModelByISBN(existingIsbn)).thenReturn(true);
+        when(repository.existsById(nonExistingId)).thenReturn(false);
+        when(repository.existsById(existingId)).thenReturn(true);
+        //Then
+        assertAll(
+                () -> {
+                    assertThrows( BookNotExistException.class , () -> {
+                        underTest.thisBookShouldExistInDatabase(nonExistingIsbn);
+                    });
+                },
+                () -> {
+                    assertDoesNotThrow(
+                            () -> {
+                                underTest.thisBookShouldExistInDatabase(existingIsbn);
+                            }
+                    );
+                },
+                () -> {
+                    assertThrows( BookNotExistException.class , () -> {
+                        underTest.thisBookShouldExistInDatabase(nonExistingId);
+                    } );
+                },
+                () -> {
+                    assertDoesNotThrow(
+                            () -> {
+                                underTest.thisBookShouldExistInDatabase(existingId);
+                            }
+                    );
+                }
+        );
     }
 
     @Test

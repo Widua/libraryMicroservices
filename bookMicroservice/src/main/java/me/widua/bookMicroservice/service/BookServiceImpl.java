@@ -1,21 +1,17 @@
 package me.widua.bookMicroservice.service;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import me.widua.bookMicroservice.models.BookModel;
 import me.widua.bookMicroservice.models.ResponseModel;
+import me.widua.bookMicroservice.models.exception.BookAlreadyExistException;
+import me.widua.bookMicroservice.models.exception.BookNotExistException;
 import me.widua.bookMicroservice.models.exception.InvalidIsbnException;
 import me.widua.bookMicroservice.repositories.BookRepository;
-import org.assertj.core.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import java.net.URI;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 public class BookServiceImpl implements BookService {
@@ -28,7 +24,6 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public ResponseModel getBooks(){
-
         List<BookModel> books = (List<BookModel>) repository.findAll();
 
         if (books.size() > 0){
@@ -38,9 +33,7 @@ public class BookServiceImpl implements BookService {
         }
     }
 
-
     @Override
-
     public ResponseModel getBook(Integer id){
         Optional<BookModel> book = repository.findById(id);
         if (book.isEmpty()){
@@ -62,52 +55,31 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public ResponseModel addBook(BookModel book){
-        boolean doesIsbnDoesntExistInDb = !doesIsbnExistInDatabase(book.getISBN());
-        boolean isIsbnValid = isISBNValid(book.getISBN());
-        if ( isIsbnValid && doesIsbnDoesntExistInDb ){
-            repository.save(book);
-            return ResponseModel.builder().status(HttpStatus.CREATED).body(URI.create(String.format("/book/%s",book.getId()))).build();
-        }
-        return ResponseModel.builder().status(HttpStatus.BAD_REQUEST).body(String.format("The ISBN number %s is used by other book!", book.getISBN())).build();
+        validateISBN(book.getISBN());
+        thisBookShouldntExistInDatabase(book.getISBN());
+
+        repository.save(book);
+        return ResponseModel.builder().status(HttpStatus.CREATED).body(URI.create(String.format("/book/%s",book.getId()))).build();
     }
 
     @Override
     public ResponseModel addBooks(List<BookModel> books){
-        int size = books.size();
-        AtomicInteger errorIndex = new AtomicInteger(0);
-        AtomicBoolean isValid = new AtomicBoolean(true);
+        URI uri = URI.create("");
+        boolean isbnRepetitions = new HashSet<>(books).size() != books.size();
 
-        Set<String> setOfIsbn = Streams
-                .stream(books)
-                .map(BookModel::getISBN)
-                .collect(Collectors.toSet());
-
-        if (setOfIsbn.size() != size){
-            return ResponseModel.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("You provided at least two books with same ISBN! ISBN for each book must be unique!").build();
+        if( isbnRepetitions ) {
+            throw new IllegalArgumentException("There are duplicated ISBN values in input");
         }
+
         books.forEach(
                 book -> {
-                    if (!isISBNValid(book.getISBN()) || doesIsbnExistInDatabase(book.getISBN())){
-                        isValid.set(false);
-                        errorIndex.set(books.indexOf(book));
-                        return;
-                    }
+                    validateISBN(book.getISBN());
+                    thisBookShouldntExistInDatabase(book.getISBN());
                 }
         );
+        repository.saveAll(books);
+        return ResponseModel.builder().status(HttpStatus.CREATED).body(uri).build();
 
-        if (isValid.get()){
-            repository.saveAll(books);
-            return ResponseModel.builder().status(HttpStatus.CREATED).body(String.format("Total number of created books %s",size)).build();
-        }
-        return ResponseModel
-                .builder()
-                .status(HttpStatus.BAD_REQUEST)
-                .body(
-                        String.format("Adding stopped, because book in %s index exist in database!"
-                                , errorIndex.get()))
-                .build();
     }
 
     @Override
@@ -120,37 +92,10 @@ public class BookServiceImpl implements BookService {
         return ResponseModel.builder().status(HttpStatus.OK).body(books.get()).build();
     }
 
-    public boolean doesIsbnExistInDatabase(String isbn){
-        if(isbn == null) throw new InvalidIsbnException("ISBN cannot be null.");
-        return repository.getBookModelByISBN(isbn).isPresent();
-    }
-
-    /* Simplified ISBN validation, on production regex can be switched to:
-     *  (?:ISBN(?:-13)?:?\ )?(?=[0-9]{13}$|(?=(?:[0-9]+[-\ ]){4})[-\ 0-9]{17}$)97[89][-\ ]?[0-9]{1,5}[-\ ]?[0-9]+[-\ ]?[0-9]+[-\ ]?[0-9]
-     *   source: https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s13.html
-     */
-    public boolean isISBNValid(String isbn){
-        if (isbn == null) throw new InvalidIsbnException("ISBN cannot be null.");
-        String isbnRegex = "[0-9]{10}|[0-9]{13}";
-        if (isbn.matches(isbnRegex)){ return true; }
-        throw new InvalidIsbnException("Invalid ISBN");
-    }
-
     @Override
     public ResponseModel updateBook(BookModel newBook, String isbn){
-
-        if (!isISBNValid(isbn)){
-            return ResponseModel.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(String.format("ISBN: %s is not valid!",isbn))
-                    .build();
-        }
-
-        if (!doesIsbnExistInDatabase(isbn)){
-            return ResponseModel.builder().status(HttpStatus.BAD_REQUEST)
-                    .body(String.format("Book with ISBN: %s does not exist!",isbn))
-                    .build();
-        }
+        validateISBN(isbn);
+        thisBookShouldExistInDatabase(isbn);
         BookModel oldBook = repository.getBookModelByISBN(isbn).get();
         repository.save( prepareBookToUpdate(oldBook,newBook) );
         return ResponseModel
@@ -202,4 +147,51 @@ public class BookServiceImpl implements BookService {
         }
         return oldBook;
     }
+
+    public void validateISBN(String isbn) throws InvalidIsbnException{
+        if (isbn == null) throw new InvalidIsbnException("ISBN cannot be null.");
+        String isbnRegex = "[0-9]{10}|[0-9]{13}";
+        if (!isbn.matches(isbnRegex)){
+            throw new InvalidIsbnException("Invalid ISBN");
+        }
+    }
+
+    public void validateId(Integer id) throws IllegalArgumentException{
+        if (id == null){
+            throw new InvalidIsbnException("ID cannot be null");
+        }
+    }
+
+    private boolean doesBookExistInDatabase(String isbn){
+        return repository.existsBookModelByISBN(isbn);
+    }
+
+    private boolean doesBookExistInDatabase(Integer id){
+        return repository.existsById(id);
+    }
+
+    public void thisBookShouldntExistInDatabase(String isbn) throws BookAlreadyExistException{
+        if (doesBookExistInDatabase(isbn)){
+            throw new BookAlreadyExistException( String.format("Book with ISBN: %s already exist.",isbn) );
+        }
+    }
+
+    public void thisBookShouldntExistInDatabase(Integer id) throws BookAlreadyExistException{
+        if (doesBookExistInDatabase(id)){
+            throw new BookAlreadyExistException(String.format("Book with ID: %s already exist.", id));
+        }
+    }
+
+    public void thisBookShouldExistInDatabase(String isbn) throws BookNotExistException{
+        if (!doesBookExistInDatabase(isbn)){
+            throw new BookNotExistException("Book with provided ISBN does not exist.");
+        }
+    }
+
+    public void thisBookShouldExistInDatabase(Integer id) throws BookNotExistException{
+        if (!doesBookExistInDatabase(id)){
+            throw new BookNotExistException("Book with provided ID does not exist.");
+        }
+    }
+
     }
