@@ -9,6 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface BookRepository extends CrudRepository<BookModel, Integer> {
+
+    boolean existsBookModelByISBN(String isbn);
     Optional<List<BookModel>> getBookModelByBookTitle(String bookTitle);
     Optional<BookModel> getBookModelByISBN(String isbn);
     Optional<List<BookModel>> getBookModelsByAuthor(String author);
