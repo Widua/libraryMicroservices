@@ -1,11 +1,11 @@
-# Add 'test' label to any change in tests
-test:
-- */src/test/**
+# Add 'tests' label to any change in tests
+tests:
+- '**/src/test/**'
 
 # Add 'actions' label to any change within the github actions
 actions:
 - .github/**
 
-# Add 'book' label to any change to src files within the bookMicroservice
-book:
+# Add 'Book Microservice' label to any change to src files within the bookMicroservice
+Book Microservice:
 - bookMicroservice/**
